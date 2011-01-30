@@ -167,6 +167,7 @@ function restws_menu_alter(&$items) {
           'page callback' => 'restws_page_callback',
           'page arguments' => array($resource),
           'access callback' => TRUE,
+          'type' => MENU_CALLBACK,
         );
       }
     }
