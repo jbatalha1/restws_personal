@@ -166,3 +166,70 @@ class RestWSFormatJSON extends RestWSBaseFormat {
     return drupal_json_decode($data);
   }
 }
+
+/**
+ * A formatter for XML.
+ */
+class RestWSFormatXML extends RestWSBaseFormat {
+
+  /**
+   * Gets the representation of a resource.
+   */
+  public function viewResource($resourceController, $id) {
+    $xml = new DOMDocument('1.0', 'utf-8');
+    $element = $xml->createElement($resourceController->resource());
+    self::addToXML($xml, $element, $resourceController->wrapper($id));
+    $xml->appendChild($element);
+    return $xml->saveXML();
+  }
+
+  /**
+   * Creates a new resource.
+   */
+  public function createResource($resourceController, $data) {
+    $values = $this->unserialize($data);
+    $id = $resourceController->create($values);
+
+    $xml = new DOMDocument('1.0', 'utf-8');
+    $element = $xml->createElement('uri');
+    self::setXMLReference($element, $resourceController->resource(), $id);
+    $xml->appendChild($element);
+    return $xml->saveXML();
+  }
+
+  /**
+   * Adds the data of the given wrapper to the given XML element.
+   */
+  public static function addToXML(DOMDocument $doc, DOMNode $parent, $wrapper) {
+    foreach ($wrapper as $name => $property) {
+      try {
+        if ($property instanceof EntityDrupalWrapper) {
+          // For referenced entities only return the URI.
+          if ($id = $property->getIdentifier()) {
+            $element = $doc->createElement($name);
+            $parent->appendChild($element);
+            self::setXMLReference($element, $property->type(), $id);
+          }
+        }
+        elseif ($property instanceof EntityValueWrapper) {
+          $element = $doc->createElement($name, $property->value());
+          $parent->appendChild($element);
+        }
+        elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
+          $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
+          $parent->appendChild($element);
+          self::addToXML($doc, $element, $property);
+        }
+      }
+      catch (EntityMetadataWrapperException $e) {
+        // A property causes problems - ignore that.
+      }
+    }
+  }
+
+  public static function setXMLReference(DOMElement $node, $resource, $id) {
+    $node->nodeValue = restws_resource_uri($resource, $id);
+    $node->setAttribute('resource', $resource);
+    $node->setAttribute('id', $id);
+  }
+}

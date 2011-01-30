@@ -71,6 +71,11 @@ function restws_restws_format_info() {
       'class' => 'RestWSFormatJSON',
       'mime type' => 'application/json',
     ),
+    'xml' => array(
+      'label' => t('XML'),
+      'class' => 'RestWSFormatXML',
+      'mime type' => 'application/xml',
+    ),
   );
 }
 
