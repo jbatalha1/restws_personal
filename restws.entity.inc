@@ -35,7 +35,7 @@ interface RestWSResourceControllerInterface {
    *   name. At least for all required properties values have to be given.
    *
    * @return
-   *   The reference on the newly created resource.
+   *   The id of the newly created resource.
    */
   public function create(array $values);
 
@@ -80,6 +80,11 @@ interface RestWSResourceControllerInterface {
    * @see entity_access()
    */
   public function access($op, $id);
+
+  /**
+   * Returns the name of the resource.
+   */
+  public function resource();
 }
 
 /**
@@ -109,7 +114,7 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
   public function create(array $values) {
     $wrapper = entity_property_values_create_entity($this->entityType, $values);
     $wrapper->save();
-    return restws_resource_reference($this->entityType, $wrapper->getIdentifier());
+    return $wrapper->getIdentifier();
   }
 
   public function update($id, array $values) {
@@ -120,19 +125,15 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
     $wrapper->save();
   }
 
-  /**
-   * Deletes a resource with the given id.
-   */
   public function delete($id) {
     entity_delete($this->entityType, $id);
   }
 
-  /**
-   * Determines access for a given resource.
-   *
-   * @see entity_access()
-   */
   public function access($op, $id) {
     return entity_access($op, $this->entityType, isset($id) ? $this->wrapper($id)->value() : NULL);
+  }
+
+  public function resource() {
+    return $this->entityType;
   }
 }

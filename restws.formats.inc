@@ -93,8 +93,9 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    */
   public function createResource($resourceController, $data) {
     $values = $this->unserialize($data);
-    $uri = $resourceController->create($values);
-    return $this->serialize($uri);
+    $id = $resourceController->create($values);
+    $ref = self::getResourceReference($resourceController->resource(), $id);
+    return $this->serialize($ref);
   }
 
   /**
@@ -126,7 +127,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
         if ($property instanceof EntityDrupalWrapper) {
           // For referenced entities only return the URI.
           if ($id = $property->getIdentifier()) {
-            $data[$name] = restws_resource_reference($property->type(), $id);
+            $data[$name] = self::getResourceReference($property->type(), $id);
           }
         }
         elseif ($property instanceof EntityValueWrapper) {
@@ -141,6 +142,14 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       }
     }
     return $data;
+  }
+
+  public static function getResourceReference($resource, $id) {
+    return array(
+      'uri' => restws_resource_uri($resource, $id),
+      'id' => $id,
+      'resource' => $resource,
+    );
   }
 }
 

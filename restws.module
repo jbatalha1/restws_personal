@@ -231,18 +231,6 @@ function restws_resource_uri($resource, $id) {
 }
 
 /**
- * Returns an array representing a reference on the given resource. To ease
- * usage, we provide the full URI as well as the resource and its id separately.
- */
-function restws_resource_reference($resource, $id) {
-  return array(
-    'uri' => restws_resource_uri($resource, $id),
-    'id' => $id,
-    'resource' => $resource,
-  );
-}
-
-/**
  * Returns the format instance for a given MIME type.
  *
  * @param $mime
