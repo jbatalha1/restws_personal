@@ -68,7 +68,7 @@ interface RestWSFormatInterface {
 }
 
 /**
- * A base for all simple formats that are just serializing/unserializing values.
+ * A base for all simple formats that are just serializing/unserializing an array of property values.
  */
 abstract class RestWSBaseFormat implements RestWSFormatInterface {
 
@@ -84,7 +84,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * Gets the representation of a resource.
    */
   public function viewResource($resourceController, $id) {
-    $values = $resourceController->read($id);
+    $values = self::getData($resourceController->wrapper($id));
     return $this->serialize($values);
   }
 
@@ -114,6 +114,33 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
 
   public function mimeType() {
     return $this->formatInfo['mime type'];
+  }
+
+  /**
+   * Gets a simple PHP array using URI references for some wrapped data.
+   */
+  public static function getData($wrapper) {
+    $data = array();
+    foreach ($wrapper as $name => $property) {
+      try {
+        if ($property instanceof EntityDrupalWrapper) {
+          // For referenced entities only return the URI.
+          if ($id = $property->getIdentifier()) {
+            $data[$name] = restws_resource_reference($property->type(), $id);
+          }
+        }
+        elseif ($property instanceof EntityValueWrapper) {
+          $data[$name] = $property->value();
+        }
+        elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
+          $data[$name] = self::getData($property);
+        }
+      }
+      catch (EntityMetadataWrapperException $e) {
+        // A property causes problems - ignore that.
+      }
+    }
+    return $data;
   }
 }
 

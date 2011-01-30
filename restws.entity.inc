@@ -12,13 +12,30 @@
 interface RestWSResourceControllerInterface {
 
   /**
+   * Returns the property info for the given resource.
+   *
+   * @return
+   *   An array structured as hook_entity_property_info() is structured for an
+   *   entity type.
+   */
+  public function propertyInfo();
+
+  /**
+   * Returns a metadata wrapper for the resource with the given id.
+   *
+   * @return EntityStructureWrapper
+   */
+  public function wrapper($id);
+
+  /**
    * Create a new resource.
    *
    * @param array $values
-   *   Array that represents the resource.
+   *   Array of values for properties of the resource, keyed by property
+   *   name. At least for all required properties values have to be given.
    *
    * @return
-   *   An array describing the URI of the newly created resource.
+   *   The reference on the newly created resource.
    */
   public function create(array $values);
 
@@ -29,7 +46,7 @@ interface RestWSResourceControllerInterface {
    *   The id of the resource that should be returned.
    *
    * @return
-   *   An array representing the resource.
+   *   The internal representation of the resource.
    */
   public function read($id);
 
@@ -39,7 +56,8 @@ interface RestWSResourceControllerInterface {
    * @param $id
    *   The id of the resource that should be updated.
    * @param array $values
-   *   Array that represents the resource.
+   *   An array of values for the properties to be updated, keyed by property
+   *   name.
    */
   public function update($id, array $values);
 
@@ -76,40 +94,24 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
     $this->entityInfo = entity_get_info($name);
   }
 
-  /**
-   * Returns the property info for the given resource.
-   */
   public function propertyInfo() {
     return entity_get_property_info($this->entityType);
   }
 
-  /**
-   * Returns a metadata wrapper for the resource with the given id.
-   */
   public function wrapper($id) {
     return entity_metadata_wrapper($this->entityType, $id);
   }
 
-  /**
-   * Returns an array representing the resource.
-   */
   public function read($id) {
-    return self::getData($this->wrapper($id));
+    return $this->wrapper($id)->value();
   }
 
-  /**
-   * Creates a new resource with values matching the property info.
-   */
   public function create(array $values) {
-    $entity = entity_property_values_create_entity($this->entityType, $values);
-    $entity->save();
-    $id = $entity->getIdentifier();
-    return restws_resource_reference($this->entityType, $id);
+    $wrapper = entity_property_values_create_entity($this->entityType, $values);
+    $wrapper->save();
+    return restws_resource_reference($this->entityType, $wrapper->getIdentifier());
   }
 
-  /**
-   * Updates a resource with values matching the property info.
-   */
   public function update($id, array $values) {
     $wrapper = $this->wrapper($id);
     foreach ($values as $name => $value) {
@@ -132,32 +134,5 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
    */
   public function access($op, $id) {
     return entity_access($op, $this->entityType, isset($id) ? $this->wrapper($id)->value() : NULL);
-  }
-
-  /**
-   * Gets a simple PHP array using URI references for some wrapped data.
-   */
-  public static function getData($wrapper) {
-    $data = array();
-    foreach ($wrapper as $name => $property) {
-      try {
-        if ($property instanceof EntityDrupalWrapper) {
-          // For referenced entities only return the URI.
-          if ($id = $property->getIdentifier()) {
-            $data[$name] = restws_resource_reference($property->type(), $id);
-          }
-        }
-        elseif ($property instanceof EntityValueWrapper) {
-          $data[$name] = $property->value();
-        }
-        elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
-          $data[$name] = self::getData($property);
-        }
-      }
-      catch (EntityMetadataWrapperException $e) {
-        // A property causes problems - ignore that.
-      }
-    }
-    return $data;
   }
 }
