@@ -110,6 +110,36 @@ class RestWSTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Tests using the xml formatter.
+   */
+  function testXmlFormatter() {
+    // Test Read.
+    $account = $this->drupalCreateUser(array('access content', 'bypass node access', 'access resource node'));
+    $this->drupalLogin($account);
+    $title = $this->randomName(8);
+    $node = $this->drupalCreateNode(array('title' => $title));
+
+    $result = $this->drupalGet("node/$node->nid", array(), array('Accept: application/xml'));
+    $this->assertRaw("<title>$title</title>", 'XML has been generated.');
+
+    // Test update.
+    $new_title = 'foo';
+    $result = $this->curlExec(array(
+      CURLOPT_HTTPGET => FALSE,
+      CURLOPT_POST => TRUE,
+      CURLOPT_POSTFIELDS => "<node><title>$new_title</title></node>",
+      CURLOPT_URL => url('node/' . $node->nid, array('absolute' => TRUE)),
+      CURLOPT_NOBODY => FALSE,
+      CURLOPT_HTTPHEADER => array('Content-Type: application/xml'),
+    ));
+    // Clear the static cache, otherwise we won't see the update.
+    $node = node_load($node->nid, NULL, TRUE);
+    $this->assertEqual($new_title, $node->title, 'Node title in DB is equal to the updated title.');
+    $this->assertResponse('200', 'HTTP response code is correct.');
+    $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/xml', 'HTTP content type is correct.');
+  }
+
+  /**
    * Test requests to non-existing resources.
    */
   function testExistsErrors() {

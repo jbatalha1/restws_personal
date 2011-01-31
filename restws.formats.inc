@@ -218,6 +218,25 @@ class RestWSFormatXML extends RestWSBaseFormat {
     return $xml->saveXML();
   }
 
+  public function unserialize($data) {
+    $xml = simplexml_load_string($data);
+    return self::xmlToArray($xml);
+  }
+
+  /**
+   * Turns the xml structure into an array of values.
+   */
+  public static function xmlToArray(SimpleXMLElement $xml) {
+    $children = $xml->children();
+    foreach ($xml->children() as $name => $element) {
+      $result[$name] = self::xmlToArray($element);
+    }
+    if (!isset($result)) {
+      $result = ($string = (string) $xml) ? $string : NULL;
+    }
+    return $result;
+  }
+
   /**
    * Adds the data of the given wrapper to the given XML element.
    */
