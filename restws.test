@@ -123,4 +123,40 @@ class RestWSTestCase extends DrupalWebTestCase {
     );
     $this->assertResponse('404', 'HTTP response code is correct.');
   }
+
+  /**
+   * Test that sensitive user data is hidden for the "access user profiles"
+   * permission.
+   */
+  function testUserPermissions() {
+    // Test other user with "acces user profiles" permission.
+    $test_user = $this->drupalCreateUser();
+    $account = $this->drupalCreateUser(array('access resource user', 'access user profiles'));
+    $this->drupalLogin($account);
+    $result = $this->curlExec(array(
+      CURLOPT_HTTPGET => TRUE,
+      CURLOPT_URL => url('user/' . $test_user->uid . '.json', array('absolute' => TRUE)),
+      CURLOPT_NOBODY => FALSE)
+    );
+    $user_array = drupal_json_decode($result);
+    $this->assertEqual($test_user->name, $user_array['name'], 'User name was received correctly.');
+    $this->assertFalse(isset($user_array['mail']), 'User mail is not present in the response.');
+    $this->assertFalse(isset($user_array['roles']), 'User roles are not present in the response.');
+    $this->assertResponse('200', 'HTTP response code is correct.');
+    $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/json', 'HTTP content type is correct.');
+
+    // Test the own user - access to sensitive information should be allowed.
+    $result = $this->curlExec(array(
+      CURLOPT_HTTPGET => TRUE,
+      CURLOPT_URL => url('user/' . $account->uid . '.json', array('absolute' => TRUE)),
+      CURLOPT_NOBODY => FALSE)
+    );
+    $user_array = drupal_json_decode($result);
+    $this->assertEqual($account->name, $user_array['name'], 'User name was received correctly.');
+    $this->assertEqual($account->mail, $user_array['mail'], 'User mail is present in the response.');
+    $role_keys = array_keys($account->roles);
+    $this->assertEqual(sort($role_keys), sort($user_array['roles']), 'User roles are present in the response.');
+    $this->assertResponse('200', 'HTTP response code is correct.');
+    $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/json', 'HTTP content type is correct.');
+  }
 }

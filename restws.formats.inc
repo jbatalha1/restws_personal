@@ -122,7 +122,8 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    */
   public static function getData($wrapper) {
     $data = array();
-    foreach ($wrapper as $name => $property) {
+    $filtered = restws_property_access_filter($wrapper);
+    foreach ($filtered as $name => $property) {
       try {
         if ($property instanceof EntityDrupalWrapper) {
           // For referenced entities only return the URI.
@@ -151,6 +152,26 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       'resource' => $resource,
     );
   }
+}
+
+/**
+ * Filters out properties where view access is not allowed for the current user.
+ *
+ * @param $wrapper
+ *   EntityMetadataWrapper that should be checked.
+ *
+ * @return
+ *   An array of properties where access is allowed, keyed by their property
+ *   name.
+ */
+function restws_property_access_filter($wrapper) {
+  $filtered = array();
+  foreach ($wrapper as $name => $property) {
+    if ($property->access('view')) {
+      $filtered[$name] = $property;
+    }
+  }
+  return $filtered;
 }
 
 /**
