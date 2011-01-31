@@ -65,7 +65,7 @@ function restws_resource_controller($name) {
  * Provides basic formats.
  */
 function restws_restws_format_info() {
-  return array(
+  $result = array(
     'json' => array(
       'label' => t('JSON'),
       'class' => 'RestWSFormatJSON',
@@ -77,6 +77,14 @@ function restws_restws_format_info() {
       'mime type' => 'application/xml',
     ),
   );
+  if (module_exists('rdf')) {
+    $result['rdf'] = array(
+      'label' => t('RDF'),
+      'class' => 'RestWSFormatRDF',
+      'mime type' => 'application/rdf+xml',
+    );
+  }
+  return $result;
 }
 
 /**

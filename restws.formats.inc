@@ -233,3 +233,115 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $node->setAttribute('id', $id);
   }
 }
+
+/**
+ * A simple formatter for RDF. Requires the RDF module for the mapping.
+ */
+class RestWSFormatRDF extends RestWSBaseFormat {
+
+  protected $namespaces;
+
+  public function __construct($name, $info) {
+    parent::__construct($name, $info);
+    $this->namespaces = rdf_get_namespaces();
+    $this->namespaces['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+  }
+
+  /**
+   * Gets the representation of a resource.
+   */
+  public function viewResource($resourceController, $id) {
+    $xml = new DOMDocument('1.0', 'utf-8');
+    $rdf_element = $xml->createElementNS($this->namespaces['rdf'], 'rdf:RDF');
+    $xml->appendChild($rdf_element);
+
+    $element = $xml->createElementNS($this->namespaces['rdf'], 'rdf:Description');
+    $element->setAttributeNS($this->namespaces['rdf'], 'rdf:about', restws_resource_uri($resourceController->resource(), $id));
+
+    // Add the RDF type of the resource if there is a mapping.
+    $entity = $resourceController->read($id);
+    if (!empty($entity->rdf_mapping['rdftype'])) {
+      foreach ($entity->rdf_mapping['rdftype'] as $rdf_type) {
+        $type_element = $xml->createElementNS($this->namespaces['rdf'], 'rdf:type');
+        list($ns, $name) = explode(':', $rdf_type);
+        $type_element->setAttributeNS($this->namespaces['rdf'], 'rdf:resource', $this->namespaces[$ns] . $name);
+        $element->appendChild($type_element);
+      }
+    }
+
+    $this->addToXML($xml, $element, $resourceController->wrapper($id));
+    $rdf_element->appendChild($element);
+    return $xml->saveXML();
+  }
+
+  public function createResource($resourceController, $data) {
+    throw new RestWSException('Not implemented', 501);
+  }
+
+  public function updateResource($resourceController, $id, $data) {
+    throw new RestWSException('Not implemented', 501);
+  }
+
+  /**
+   * Adds the data of the given wrapper to the given XML element.
+   */
+  public function addToXML(DOMDocument $doc, DOMNode $parent, $wrapper) {
+    foreach ($wrapper as $name => $property) {
+      try {
+        if ($property instanceof EntityDrupalWrapper) {
+          // For referenced entities only return the URI.
+          if ($id = $property->getIdentifier()) {
+            $element = $this->addRdfElement($doc, $wrapper, $name);
+            $parent->appendChild($element);
+            $this->addReference($doc, $element, $property->type(), $id);
+          }
+        }
+        elseif ($property instanceof EntityValueWrapper) {
+          $element = $this->addRdfElement($doc, $wrapper, $name);
+          $parent->appendChild($element);
+          $element->nodeValue = $property->value();
+        }
+        elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
+          $element = $this->addRdfElement($doc, $wrapper, $name);
+          $parent->appendChild($element);
+          $node = $doc->createElementNS($this->namespaces['rdf'], 'rdf:Description');
+          $element->appendChild($node);
+          $this->addToXML($doc, $node, $property);
+        }
+      }
+      catch (EntityMetadataWrapperException $e) {
+        // A property causes problems - ignore that.
+      }
+    }
+  }
+
+  public function addReference(DomDocument $doc, DOMElement $node, $resource, $id) {
+    $element = $doc->createElementNS($this->namespaces['rdf'], 'rdf:Description');
+    $element->setAttributeNS($this->namespaces['rdf'], 'rdf:about', restws_resource_uri($resource, $id));
+    $node->appendChild($element);
+  }
+
+  /**
+   * Adds an RDF element for the given property of the wrapper using the RDF mapping.
+   */
+  public function addRdfElement(DOMDOcument $doc, EntityMetadataWrapper $wrapper, $name) {
+    if ($wrapper instanceof EntityDrupalWrapper) {
+      $entity = $wrapper->value();
+      if (!empty($entity->rdf_mapping[$name])) {
+        // Just make use of the first predicate for now.
+        $predicate = reset($entity->rdf_mapping[$name]['predicates']);
+        list($ns, $qname) = explode(':', $predicate);
+        $element = $doc->createElementNS($this->namespaces[$ns], $predicate);
+
+        if (!empty($entity->rdf_mapping[$name]['datatype'])) {
+          $element->setAttributeNS($this->namespaces['rdf'], 'rdf:datatype', $entity->rdf_mapping[$name]['datatype']);
+        }
+      }
+    }
+    if (!isset($element)) {
+      // For other elements just use the site URL as namespace.
+      $element = $doc->createElementNS(url('', array('absolute' => TRUE)), 'site:' . (is_numeric($name) ? 'item' : $name));
+    }
+    return $element;
+  }
+}
