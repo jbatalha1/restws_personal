@@ -61,16 +61,16 @@ Design goals and concept
 
  * The module supports full CRUD (Create, Read, Update, Delete) for resources:
  
-     * Create: HTTP PUT /<entity type name> (requires HTTP Accept header set to
-       the MIME type of <format>)
+     * Create: HTTP PUT /<entity type name> (requires HTTP Content-Type header
+       set to the MIME type of <format>)
 
      * Read: HTTP GET /<entity type name>/<entity id>.<format>
        or    HTTP GET /<entity type name>/<entity id> (requires HTTP Accept
        header set to the MIME type of <format>)
 
      * Update: HTTP POST /<entity type name>/<entity id>.<format>
-       or      HTTP POST /<entity type name>/<entity id> (requires HTTP Accept
-       header set to the MIME type of the posted format)
+       or      HTTP POST /<entity type name>/<entity id> (requires HTTP
+       Content-Type header set to the MIME type of the posted format)
 
      * Delete: HTTP DELETE /<entity type name>/<entity id>
 

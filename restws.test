@@ -63,7 +63,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       CURLOPT_POSTFIELDS => $json,
       CURLOPT_URL => url('node', array('absolute' => TRUE)),
       CURLOPT_NOBODY => FALSE,
-      CURLOPT_HTTPHEADER => array('Accept: application/json'),
+      CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
     ));
     $result_array = drupal_json_decode($result);
     $nid = $result_array['id'];
@@ -84,7 +84,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       CURLOPT_POSTFIELDS => $json,
       CURLOPT_URL => url('node/' . $node->nid, array('absolute' => TRUE)),
       CURLOPT_NOBODY => FALSE,
-      CURLOPT_HTTPHEADER => array('Accept: application/json'),
+      CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
     ));
     // Clear the static cache, otherwise we won't see the update.
     $node = node_load($node->nid, NULL, TRUE);
@@ -101,7 +101,6 @@ class RestWSTestCase extends DrupalWebTestCase {
       CURLOPT_CUSTOMREQUEST => 'DELETE',
       CURLOPT_URL => url('node/' . $node->nid, array('absolute' => TRUE)),
       CURLOPT_NOBODY => FALSE,
-      CURLOPT_HTTPHEADER => array('Accept: application/json'),
     ));
     // Clear the static cache, otherwise we won't see the update.
     $node = node_load($node->nid, NULL, TRUE);
