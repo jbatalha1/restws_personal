@@ -108,7 +108,7 @@ function restws_format($name) {
  *   One of 'create', 'update', 'delete' or 'view'.
  */
 function restws_handle_request($op, $format, $resource, $id = NULL, $payload = NULL) {
-  if (($resource_controller = restws_resource_controller($resource)) && $resource_controller->access($op, $id)) {
+  if (user_access('access resource ' . $resource) && ($resource_controller = restws_resource_controller($resource)) && $resource_controller->access($op, $id)) {
     try {
       $method = $op . 'Resource';
       if ($op == 'create') {
@@ -259,4 +259,18 @@ function restws_format_mimetype($mime) {
     }
   }
   return FALSE;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function restws_permission() {
+  $permissions = array();
+  // Create service access permissions per resource type.
+  foreach (restws_get_resource_info() as $type => $info) {
+    $permissions['access resource ' . $type] = array(
+      'title' => t('Access the resource %resource', array('%resource' => $type)),
+    );
+  }
+  return $permissions;
 }
