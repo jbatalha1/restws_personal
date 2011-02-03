@@ -119,8 +119,13 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
 
   public function update($id, array $values) {
     $wrapper = $this->wrapper($id);
-    foreach ($values as $name => $value) {
-      $wrapper->{$name}->set($value);
+    try {
+      foreach ($values as $name => $value) {
+        $wrapper->{$name}->set($value);
+      }
+    }
+    catch (EntityMetadataWrapperException $e) {
+      throw new RestWSException($e->getMessage(), 406);
     }
     $wrapper->save();
   }

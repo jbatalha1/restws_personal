@@ -121,7 +121,7 @@ function restws_handle_request($op, $format, $resource, $id = NULL, $payload = N
       drupal_add_http_header('Content-Type', $format->mimeType());
     }
     catch (RestWSException $e) {
-      echo check_plain($e->getHTTPError());
+      echo check_plain($e->getHTTPError()) . ': ' . check_plain($e->getMessage());
       drupal_add_http_header('Status', $e->getHTTPError());
     }
   }
@@ -140,7 +140,13 @@ function restws_handle_request($op, $format, $resource, $id = NULL, $payload = N
 class RestWSException extends Exception {
 
   public function getHTTPError() {
-    return '500 Internal Server Error';
+    $code = $this->getCode();
+    switch ($code) {
+      case 406:
+        return '406 Not Acceptable';
+      default:
+        return '500 Internal Server Error';
+    }
   }
 }
 

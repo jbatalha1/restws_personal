@@ -140,9 +140,9 @@ class RestWSTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test requests to non-existing resources.
+   * Test requests to non-existing resources and other errors.
    */
-  function testExistsErrors() {
+  function testErrors() {
     // Read non-existing resource.
     $random_nid = rand(1, 1000);
     $this->curlExec(array(
@@ -151,6 +151,23 @@ class RestWSTestCase extends DrupalWebTestCase {
       CURLOPT_NOBODY => FALSE)
     );
     $this->assertResponse('404', 'HTTP response code is correct.');
+
+    // Update a node with an unknown property.
+    $account = $this->drupalCreateUser(array('access content', 'bypass node access', 'access resource node'));
+    $this->drupalLogin($account);
+    $node = $this->drupalCreateNode();
+    $property_name = $this->randomName(8);
+    $json = drupal_json_encode(array($property_name => $property_name));
+    $response = $this->curlExec(array(
+      CURLOPT_HTTPGET => FALSE,
+      CURLOPT_POST => TRUE,
+      CURLOPT_POSTFIELDS => $json,
+      CURLOPT_URL => url('node/' . $node->nid, array('absolute' => TRUE)),
+      CURLOPT_NOBODY => FALSE,
+      CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
+    ));
+    $this->assertEqual($response, "406 Not Acceptable: Unknown data property $property_name.", 'Response body is correct');
+    $this->assertResponse('406', 'HTTP response code is correct.');
   }
 
   /**
