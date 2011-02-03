@@ -112,7 +112,12 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
   }
 
   public function create(array $values) {
-    $wrapper = entity_property_values_create_entity($this->entityType, $values);
+    try {
+      $wrapper = entity_property_values_create_entity($this->entityType, $values);
+    }
+    catch (EntityMetadataWrapperException $e) {
+      throw new RestWSException($e->getMessage(), 406);
+    }
     $wrapper->save();
     return $wrapper->getIdentifier();
   }
