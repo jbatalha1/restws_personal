@@ -53,7 +53,7 @@ function restws_restws_resource_info() {
 function restws_resource_controller($name) {
   $static = &drupal_static(__FUNCTION__);
   if (!isset($static[$name])) {
-    $info = restws_restws_resource_info();
+    $info = restws_get_resource_info();
     $static[$name] = isset($info[$name]) ? new $info[$name]['class']($name, $info[$name]) : FALSE;
   }
   return $static[$name];
