@@ -241,7 +241,8 @@ class RestWSFormatXML extends RestWSBaseFormat {
    * Adds the data of the given wrapper to the given XML element.
    */
   public static function addToXML(DOMDocument $doc, DOMNode $parent, $wrapper) {
-    foreach ($wrapper as $name => $property) {
+    $filtered = restws_property_access_filter($wrapper);
+    foreach ($filtered as $name => $property) {
       try {
         if ($property instanceof EntityDrupalWrapper) {
           // For referenced entities only return the URI.
@@ -252,7 +253,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
           }
         }
         elseif ($property instanceof EntityValueWrapper) {
-          $element = $doc->createElement($name, $property->value());
+          $element = $doc->createElement(is_numeric($name) ? 'item' : $name, $property->value());
           $parent->appendChild($element);
         }
         elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
