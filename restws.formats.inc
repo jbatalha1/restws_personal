@@ -327,7 +327,8 @@ class RestWSFormatRDF extends RestWSBaseFormat {
    * Adds the data of the given wrapper to the given XML element.
    */
   public function addToXML(DOMDocument $doc, DOMNode $parent, $wrapper) {
-    foreach ($wrapper as $name => $property) {
+    $filtered = restws_property_access_filter($wrapper);
+    foreach ($filtered as $name => $property) {
       try {
         if ($property instanceof EntityDrupalWrapper) {
           // For referenced entities only return the URI.
