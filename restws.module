@@ -249,6 +249,10 @@ function restws_page_callback($resource, $page_callback = NULL) {
     $args = func_get_args();
     return call_user_func_array($page_callback, array_slice($args, 2));
   }
+  echo '404 Not Found';
+  drupal_add_http_header('Status', '404 Not Found');
+  drupal_page_footer();
+  exit;
 }
 
 /**
