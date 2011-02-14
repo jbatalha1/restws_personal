@@ -142,6 +142,8 @@ class RestWSException extends Exception {
   public function getHTTPError() {
     $code = $this->getCode();
     switch ($code) {
+      case 404:
+        return '404 Not Found';
       case 406:
         return '406 Not Acceptable';
       default:
