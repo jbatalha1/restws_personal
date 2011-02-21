@@ -104,6 +104,8 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   public function updateResource($resourceController, $id, $data) {
     $values = $this->unserialize($data);
     $resourceController->update($id, $values);
+    // Return an empty representation.
+    return $this->serialize(array());
   }
 
   /**
@@ -111,6 +113,8 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    */
   public function deleteResource($resourceController, $id) {
     $resourceController->delete($id);
+    // Return an empty representation.
+    return $this->serialize(array());
   }
 
   public function mimeType() {
@@ -179,7 +183,7 @@ function restws_property_access_filter($wrapper) {
  */
 class RestWSFormatJSON extends RestWSBaseFormat {
 
-  public function serialize(array $values) {
+  public function serialize($values) {
     return drupal_json_encode($values);
   }
 
@@ -215,6 +219,12 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $element = $xml->createElement('uri');
     self::setXMLReference($element, $resourceController->resource(), $id);
     $xml->appendChild($element);
+    return $xml->saveXML();
+  }
+
+  public function serialize($data) {
+    // Return an empty XML document.
+    $xml = new DOMDocument('1.0', 'utf-8');
     return $xml->saveXML();
   }
 
