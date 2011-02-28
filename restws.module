@@ -248,6 +248,16 @@ function restws_page_callback($resource, $page_callback = NULL) {
         $op = 'view';
     }
     $payload = file_get_contents('php://input');
+    if ($file = variable_get('restws_debug_log')) {
+      $log = date(DATE_ISO8601) . "\n";
+      $log .= 'Resource: ' . $resource . "\n";
+      $log .= 'Operation: ' . $op . "\n";
+      $log .= 'Format: ' . $format->mimeType() . "\n";
+      $log .= 'Id: ' . $id . "\n";
+      $log .= 'Payload: ' . $payload . "\n";
+      $log .= "----------------------------------------------------------------\n";
+      file_put_contents($file, $log, FILE_APPEND);
+    }
     restws_handle_request($op, $format, $resource, $id, $payload);
   }
 

@@ -82,3 +82,15 @@ Design goals and concept
    standard Drupal cookie and session handling. The module comes with an
    optional HTTP Basic Authentication module (restws_auth_basic) that performs
    a user login with the credentials provided via the usual HTTP headers.
+
+
+Debugging
+---------
+
+You can enable a debug logging facility by setting a variable in settings.php
+(e.g. in DRUPAL_ROOT/sites/default/settings.php):
+
+$conf['restws_debug_log'] = DRUPAL_ROOT . '/restws_debug.log';
+
+It will write the details of every web service request to the file you have
+specified, e.g. to DRUPAL_ROOT/restws_debug.log.
