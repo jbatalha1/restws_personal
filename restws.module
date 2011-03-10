@@ -215,10 +215,9 @@ function restws_page_callback($resource, $page_callback = NULL) {
         $format = restws_format_mimetype($_SERVER['CONTENT_TYPE']);
         break;
       case 'DELETE':
-        if (!empty($_SERVER['CONTENT_TYPE'])) {
-          $format = restws_format_mimetype($_SERVER['CONTENT_TYPE']);
-        }
-        else {
+        $parts = explode(',', $_SERVER['HTTP_ACCEPT'], 2);
+        $format = restws_format_mimetype($parts[0]);
+        if (!$format) {
           // We don't care about the format, just pick JSON.
           $format = restws_format('json');
         }
