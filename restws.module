@@ -106,28 +106,43 @@ function restws_format($name) {
  * @param $op
  *   One of 'create', 'update', 'delete' or 'view'.
  */
-function restws_handle_request($op, $format, $resource, $id = NULL, $payload = NULL) {
-  if (user_access('access resource ' . $resource) && ($resource_controller = restws_resource_controller($resource)) && $resource_controller->access($op, $id)) {
-    try {
-      $method = $op . 'Resource';
-      if ($op == 'create') {
-        print $format->$method($resource_controller, $payload);
-        drupal_add_http_header('Status', '201 Created');
+function restws_handle_request($op, $format, $resource_name, $id = NULL, $payload = NULL) {
+  if ($resource = restws_resource_controller($resource_name)) {
+    // Allow other modules to change the web service request or react upon it.
+    $request = array(
+      'op' => &$op,
+      'format' => &$format,
+      'resource' => &$resource,
+      'id' => &$id,
+      'payload' => &$payload,
+    );
+    drupal_alter('restws_request', $request);
+    if (user_access('access resource ' . $resource_name) && $resource->access($op, $id)) {
+      try {
+        $method = $op . 'Resource';
+        if ($op == 'create') {
+          print $format->$method($resource, $payload);
+          drupal_add_http_header('Status', '201 Created');
+        }
+        else {
+          print $format->$method($resource, $id, $payload);
+        }
+        drupal_add_http_header('Content-Type', $format->mimeType());
       }
-      else {
-        print $format->$method($resource_controller, $id, $payload);
+      catch (RestWSException $e) {
+        echo check_plain($e->getHTTPError()) . ': ' . check_plain($e->getMessage());
+        drupal_add_http_header('Status', $e->getHTTPError());
       }
-      drupal_add_http_header('Content-Type', $format->mimeType());
     }
-    catch (RestWSException $e) {
-      echo check_plain($e->getHTTPError()) . ': ' . check_plain($e->getMessage());
-      drupal_add_http_header('Status', $e->getHTTPError());
+    else {
+      echo '403 Forbidden';
+      drupal_add_http_header('Status', '403 Forbidden');
+      watchdog('access denied', check_plain($_GET['q']), NULL, WATCHDOG_WARNING);
     }
   }
   else {
-    echo '403 Forbidden';
-    drupal_add_http_header('Status', '403 Forbidden');
-    watchdog('access denied', check_plain($_GET['q']), NULL, WATCHDOG_WARNING);
+    echo '404 Not Found';
+    drupal_add_http_header('Status', '404 Not Found');
   }
   drupal_page_footer();
   exit;
