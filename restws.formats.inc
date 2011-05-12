@@ -256,13 +256,15 @@ class RestWSFormatXML extends RestWSBaseFormat {
         if ($property instanceof EntityDrupalWrapper) {
           // For referenced entities only return the URI.
           if ($id = $property->getIdentifier()) {
-            $element = $doc->createElement($name);
+            $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
             $parent->appendChild($element);
             self::setXMLReference($element, $property->type(), $id);
           }
         }
         elseif ($property instanceof EntityValueWrapper) {
-          $element = $doc->createElement(is_numeric($name) ? 'item' : $name, $property->value());
+          $escaped = $doc->createTextNode($property->value());
+          $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
+          $element->appendChild($escaped);
           $parent->appendChild($element);
         }
         elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
