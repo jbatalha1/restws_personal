@@ -25,14 +25,16 @@ Usage / Testing
 
  * To obtain the JSON representation of an entity use your browser to visit
 
-   http://yoursite.com/node/1.json or
-   http://yoursite.com/user/1.json or
-   http://yoursite.com/<entity type name>/<entity id>.json
+   http://example.com/node/1.json or
+   http://example.com/user/1.json or
+   http://example.com/<entity type name>/<entity id>.json
 
    for an example.
    
- * The module will respect your access permissions, so make sure you are logged
-   in.
+ * In order to access entities via this interface, permissions must be granted
+   for the desired operation (e.g. "access content" or "create content" for
+   nodes). Additionally each resource is protected with a RESTWS permission
+   that can be configured at "admin/people/permissions#module-restws".
 
 
 Design goals and concept
