@@ -137,7 +137,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     );
     $json = drupal_json_encode($new_node);
     $result = $this->httpRequest('node', 'PUT', $account, $json);
-    $this->assertEqual($result, "406 Not Acceptable: Unknown data property $property_name.", 'Response body is correct');
+    $this->assertEqual($result, "406 Not Acceptable: Unknown data properties: $property_name.", 'Response body is correct');
     $this->assertResponse('406', 'HTTP response code is correct.');
   }
 

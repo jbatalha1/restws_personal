@@ -117,6 +117,11 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
     catch (EntityMetadataWrapperException $e) {
       throw new RestWSException($e->getMessage(), 406);
     }
+    $properties = $wrapper->getPropertyInfo();
+    $diff = array_diff_key($values, $properties);
+    if (!empty($diff)) {
+      throw new RestWSException('Unknown data properties: ' . implode(' ', array_keys($diff)) . '.', 406);
+    }
     $wrapper->save();
     return $wrapper->getIdentifier();
   }
