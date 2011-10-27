@@ -51,6 +51,16 @@ function hook_restws_resource_info() {
 }
 
 /**
+ * Alter available resource information.
+ *
+ * @param array $resource_info
+ *   @see hook_restws_resource_info().
+ */
+function hook_restws_resource_info_alter(&$resource_info) {
+  $resource_info['node']['class'] = 'MySpecialNodeResourceController';
+}
+
+/**
  * Define restws compatible formats.
  *
  * This hook is required in order to add new restws formats.
@@ -67,7 +77,7 @@ function hook_restws_resource_info() {
  *   - mime type: The official internet media type (MIME type) of the format.
  *     Required.
  */
-function restws_restws_format_info() {
+function hook_restws_format_info() {
   return array(
     'json' => array(
       'label' => t('JSON'),
@@ -80,6 +90,33 @@ function restws_restws_format_info() {
       'mime type' => 'application/xml',
     ),
   );
+}
+
+/**
+ * Alter available format information.
+ *
+ * @param array $format_info
+ *   @see hook_restws_format_info().
+ */
+function hook_restws_format_info_alter(&$format_info) {
+  $format_info['json']['class'] = 'MyJsonFormatHandler';
+}
+
+/**
+ * Alter the incoming request array.
+ *
+ * @param array $request
+ *   A request array that contains the following items:
+ *   - op: operation string, one of create, read, update or delete.
+ *   - format: object implementing RestWSFormatInterface.
+ *   - resource: object implementing RestWSResourceControllerInterface.
+ *   - id: resource identifier or NULL for the create operation.
+ *   - payload: array containing data attached to this request, if any.
+ */
+function hook_restws_request_alter(array &$request) {
+  if ($request['resource']->resource() == 'node') {
+    $request['format'] = restws_format('json');
+  }
 }
 
 /**
