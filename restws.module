@@ -237,8 +237,10 @@ function restws_page_callback($resource, $page_callback = NULL) {
         $format = restws_format_mimetype($_SERVER['CONTENT_TYPE']);
         break;
       case 'DELETE':
-        $parts = explode(',', $_SERVER['HTTP_ACCEPT'], 2);
-        $format = restws_format_mimetype($parts[0]);
+        if (isset($_SERVER['HTTP_ACCEPT'])) {
+          $parts = explode(',', $_SERVER['HTTP_ACCEPT'], 2);
+          $format = restws_format_mimetype($parts[0]);
+        }
         if (!$format) {
           // We don't care about the format, just pick JSON.
           $format = restws_format('json');
@@ -247,7 +249,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
       default:
         // Get the format MIME type form the HTTP Accept header.
         // Ignore requests from web browsers that accept HTML.
-        if (strpos($_SERVER['HTTP_ACCEPT'], 'html') === FALSE) {
+        if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'html') === FALSE) {
           // Use the first MIME type.
           $parts = explode(',', $_SERVER['HTTP_ACCEPT'], 2);
           $format = restws_format_mimetype($parts[0]);
