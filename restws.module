@@ -172,14 +172,21 @@ class RestWSException extends Exception {
 function restws_menu_alter(&$items) {
   foreach (restws_get_resource_info() as $resource => $info) {
     // @todo document 'menu path'
-    $menu_path = isset($info['menu_path']) ? $info['menu_path'] : $resource . '/%' . $resource;
+    $menu_path = isset($info['menu_path']) ? $info['menu_path'] . '/%' : $resource . '/%';
+    // Replace existing page callbacks with our own (e.g. node/%)
     if (isset($items[$menu_path])) {
       // Preprend the page callback and the resource to the page arguments.
+      // So we can re-use it on standard HTML page requests.
+      array_unshift($items[$menu_path]['page arguments'], $resource, $items[$menu_path]['page callback']);
+      $items[$menu_path]['page callback'] = 'restws_page_callback';
+    }
+    // Also replace wildcard loaders (e.g. node/%node)
+    elseif (isset($items[$menu_path . $resource])) {
+      $menu_path = $menu_path . $resource;
       array_unshift($items[$menu_path]['page arguments'], $resource, $items[$menu_path]['page callback']);
       $items[$menu_path]['page callback'] = 'restws_page_callback';
     }
     else {
-      $menu_path = isset($info['menu_path']) ? $info['menu_path'] : $resource . '/%';
       $items[$menu_path] = array(
         'page callback' => 'restws_page_callback',
         'page arguments' => array($resource),
@@ -326,4 +333,16 @@ function restws_permission() {
     );
   }
   return $permissions;
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function restws_module_implements_alter(&$implementations, $hook) {
+  // Make sure that restws runs last.
+  if ($hook == 'menu_alter') {
+    $group = $implementations['restws'];
+    unset($implementations['restws']);
+    $implementations['restws'] = $group;
+  }
 }
