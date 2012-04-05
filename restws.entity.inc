@@ -13,7 +13,7 @@ interface RestWSResourceControllerInterface {
   /**
    * Returns the property info for the given resource.
    *
-   * @return
+   * @return array
    *   An array structured as hook_entity_property_info() is structured for an
    *   entity type.
    */
@@ -23,6 +23,7 @@ interface RestWSResourceControllerInterface {
    * Returns a metadata wrapper for the resource with the given id.
    *
    * @return EntityStructureWrapper
+   *   Metadata wrapper of the resource.
    */
   public function wrapper($id);
 
@@ -33,7 +34,7 @@ interface RestWSResourceControllerInterface {
    *   Array of values for properties of the resource, keyed by property
    *   name. At least for all required properties values have to be given.
    *
-   * @return
+   * @return int|string
    *   The id of the newly created resource.
    */
   public function create(array $values);
@@ -41,7 +42,7 @@ interface RestWSResourceControllerInterface {
   /**
    * Returns an existing resource.
    *
-   * @param $id
+   * @param int|string $id
    *   The id of the resource that should be returned.
    *
    * @return
@@ -52,7 +53,7 @@ interface RestWSResourceControllerInterface {
   /**
    * Update an existing resource.
    *
-   * @param $id
+   * @param int|string $id
    *   The id of the resource that should be updated.
    * @param array $values
    *   An array of values for the properties to be updated, keyed by property
@@ -63,7 +64,7 @@ interface RestWSResourceControllerInterface {
   /**
    * Delete an existing resource.
    *
-   * @param $id
+   * @param int|string $id
    *   The id of the resource that should be deleted.
    */
   public function delete($id);
@@ -71,9 +72,9 @@ interface RestWSResourceControllerInterface {
   /**
    * Determines access for a given operation and resource.
    *
-   * @param $op
+   * @param string $op
    *   Either 'create', 'view' (= read), 'update' or 'delete'.
-   * @param $id
+   * @param int|string $id
    *   The id of the resource.
    *
    * @see entity_access()

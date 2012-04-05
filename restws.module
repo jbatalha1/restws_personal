@@ -48,6 +48,7 @@ function restws_restws_resource_info() {
  * Returns a instance of a resource controller.
  *
  * @return RestWSResourceControllerInterface
+ *   A resource controller object.
  */
 function restws_resource_controller($name) {
   $static = &drupal_static(__FUNCTION__);
@@ -90,6 +91,7 @@ function restws_restws_format_info() {
  * Returns an instance of a format.
  *
  * @return RestWSFormatInterface
+ *   A resource format object.
  */
 function restws_format($name) {
   $static = &drupal_static(__FUNCTION__);
@@ -103,7 +105,7 @@ function restws_format($name) {
 /**
  * Handles a request.
  *
- * @param $op
+ * @param string $op
  *   One of 'create', 'update', 'delete' or 'view'.
  */
 function restws_handle_request($op, $format, $resource_name, $id = NULL, $payload = NULL) {
@@ -236,6 +238,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
         // Get format MIME type form HTTP Content type header.
         $format = restws_format_mimetype($_SERVER['CONTENT_TYPE']);
         break;
+
       case 'DELETE':
         if (isset($_SERVER['HTTP_ACCEPT'])) {
           $parts = explode(',', $_SERVER['HTTP_ACCEPT'], 2);
@@ -246,6 +249,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
           $format = restws_format('json');
         }
         break;
+
       default:
         // Get the format MIME type form the HTTP Accept header.
         // Ignore requests from web browsers that accept HTML.
@@ -261,12 +265,15 @@ function restws_page_callback($resource, $page_callback = NULL) {
       case 'PUT':
         $op = 'create';
         break;
+
       case 'POST':
         $op = 'update';
         break;
+
       case 'DELETE':
         $op = 'delete';
         break;
+
       default:
         $op = 'view';
     }
@@ -308,10 +315,10 @@ function restws_resource_uri($resource, $id) {
 /**
  * Returns the format instance for a given MIME type.
  *
- * @param $mime
+ * @param string $mime
  *   The MIME type, e.g. 'application/json' or 'application/xml'.
  *
- * @return
+ * @return bool|RestWSFormatInterface
  *   The format controller or FALSE if the format was not found.
  */
 function restws_format_mimetype($mime) {
