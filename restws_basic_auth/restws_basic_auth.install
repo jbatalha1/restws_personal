@@ -13,7 +13,7 @@ function restws_basic_auth_uninstall() {
 }
 
 /**
- * Implements hook_update_N().
+ * Set the user name regex to accept all for backwards compatibility.
  */
 function restws_basic_auth_update_7100() {
   // Set the user name regex to accept all.
