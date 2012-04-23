@@ -236,7 +236,8 @@ function restws_page_callback($resource, $page_callback = NULL) {
       case 'PUT':
       case 'POST':
         // Get format MIME type form HTTP Content type header.
-        $format = restws_format_mimetype($_SERVER['CONTENT_TYPE']);
+        $parts = explode(';', $_SERVER['CONTENT_TYPE'], 2);
+        $format = restws_format_mimetype($parts[0]);
         break;
 
       case 'DELETE':
