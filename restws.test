@@ -80,6 +80,25 @@ class RestWSTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Tests bad requests.
+   */
+  function testBadRequests() {
+    // Assure that nodes without types won't be created.
+    $account = $this->drupalCreateUser(array('access content', 'bypass node access', 'access resource node', 'administer users'));
+    $title = $this->randomName(8);
+    $new_node = array(
+      'body'  => array(LANGUAGE_NONE => array(array())),
+      'title' => $title,
+    );
+    $json = drupal_json_encode($new_node);
+    $result = $this->httpRequest('node', 'PUT', $account, $json);
+    $node = entity_load('node', FALSE, array('title' => $title));
+    $this->assertEqual(count($node), 0, "Node wasn't created");
+
+    $this->assertResponse('406', 'Missing bundle: type');
+  }
+
+  /**
    * Tests using the xml formatter.
    */
   function testXmlFormatter() {

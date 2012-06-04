@@ -118,6 +118,18 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
     catch (EntityMetadataWrapperException $e) {
       throw new RestWSException($e->getMessage(), 406);
     }
+
+    // Make sure that bundle information is present on entities that have
+    // bundles.
+    $entity_info = entity_get_info($this->entityType);
+    if (isset($entity_info['bundle keys'])) {
+      foreach ($entity_info['bundle keys'] as $bundle_key) {
+        if (!array_key_exists($bundle_key, $values)) {
+          throw new RestWSException('Missing bundle: ' . $bundle_key, 406);
+        }
+      }
+    }
+
     $properties = $wrapper->getPropertyInfo();
     $diff = array_diff_key($values, $properties);
     if (!empty($diff)) {

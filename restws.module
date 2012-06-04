@@ -177,7 +177,7 @@ function restws_menu_alter(&$items) {
     $menu_path = isset($info['menu_path']) ? $info['menu_path'] . '/%' : $resource . '/%';
     // Replace existing page callbacks with our own (e.g. node/%)
     if (isset($items[$menu_path])) {
-      // Preprend the page callback and the resource to the page arguments.
+      // Prepend the page callback and the resource to the page arguments.
       // So we can re-use it on standard HTML page requests.
       array_unshift($items[$menu_path]['page arguments'], $resource, $items[$menu_path]['page callback']);
       $items[$menu_path]['page callback'] = 'restws_page_callback';
@@ -200,7 +200,7 @@ function restws_menu_alter(&$items) {
     // @todo fix 'menu path'
     if (!isset($info['menu_path'])) {
       if (isset($items[$resource])) {
-        // Preprend the page callback and the resource to the page arguments.
+        // Prepend the page callback and the resource to the page arguments.
         if (!isset($items[$resource]['page arguments'])) {
           $items[$resource]['page arguments'] = array();
         }
