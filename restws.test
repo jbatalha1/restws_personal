@@ -52,7 +52,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       'author'    => $account->uid,
     );
     $json = drupal_json_encode($new_node);
-    $result = $this->httpRequest('node', 'PUT', $account, $json);
+    $result = $this->httpRequest('node', 'POST', $account, $json);
     $result_array = drupal_json_decode($result);
     $nid = $result_array['id'];
     $node = node_load($nid);
@@ -63,7 +63,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     // Test Update.
     $new_title = $this->randomName(8);
     $json = drupal_json_encode(array('title' => $new_title));
-    $this->httpRequest('node/' . $node->nid, 'POST', $account, $json);
+    $this->httpRequest('node/' . $node->nid, 'PUT', $account, $json);
     // Clear the static cache, otherwise we won't see the update.
     $node = node_load($node->nid, NULL, TRUE);
     $this->assertEqual($new_title, $node->title, 'Node title in DB is equal to the updated title.');
@@ -91,7 +91,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       'title' => $title,
     );
     $json = drupal_json_encode($new_node);
-    $result = $this->httpRequest('node', 'PUT', $account, $json);
+    $result = $this->httpRequest('node', 'POST', $account, $json);
     $node = entity_load('node', FALSE, array('title' => $title));
     $this->assertEqual(count($node), 0, "Node wasn't created");
 
@@ -115,7 +115,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Test update.
     $new_title = 'foo';
-    $result = $this->httpRequest('node/' . $node->nid, 'POST', $account, "<node><title>$new_title</title></node>", 'xml');
+    $result = $this->httpRequest('node/' . $node->nid, 'PUT', $account, "<node><title>$new_title</title></node>", 'xml');
     // Clear the static cache, otherwise we won't see the update.
     $node = node_load($node->nid, NULL, TRUE);
     $this->assertEqual($new_title, $node->title, 'Node title in DB is equal to the updated title.');
@@ -139,7 +139,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     $node = $this->drupalCreateNode();
     $property_name = $this->randomName(8);
     $json = drupal_json_encode(array($property_name => $property_name));
-    $result = $this->httpRequest('node/' . $node->nid, 'POST', $account, $json);
+    $result = $this->httpRequest('node/' . $node->nid, 'PUT', $account, $json);
     $this->assertEqual($result, "406 Not Acceptable: Unknown data property $property_name.", 'Response body is correct');
     $this->assertResponse('406', 'HTTP response code is correct.');
 
@@ -160,7 +160,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       $property_name => $property_name,
     );
     $json = drupal_json_encode($new_node);
-    $result = $this->httpRequest('node', 'PUT', $account, $json);
+    $result = $this->httpRequest('node', 'POST', $account, $json);
     $this->assertEqual($result, "406 Not Acceptable: Unknown data properties: $property_name.", 'Response body is correct');
     $this->assertResponse('406', 'HTTP response code is correct.');
   }
@@ -207,19 +207,19 @@ class RestWSTestCase extends DrupalWebTestCase {
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE)
         );
-      case 'PUT':
+      case 'POST':
         return $this->curlExec(array(
           CURLOPT_HTTPGET => FALSE,
-          CURLOPT_CUSTOMREQUEST => 'PUT',
+          CURLOPT_POST => TRUE,
           CURLOPT_POSTFIELDS => $body,
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE,
           CURLOPT_HTTPHEADER => array('Content-Type: application/' . $format),
         ));
-      case 'POST':
+      case 'PUT':
         return $this->curlExec(array(
           CURLOPT_HTTPGET => FALSE,
-          CURLOPT_POST => TRUE,
+          CURLOPT_CUSTOMREQUEST => 'PUT',
           CURLOPT_POSTFIELDS => $body,
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE,

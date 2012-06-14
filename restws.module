@@ -233,8 +233,8 @@ function restws_page_callback($resource, $page_callback = NULL) {
   else {
     $id = $id_arg;
     switch ($_SERVER['REQUEST_METHOD']) {
-      case 'PUT':
       case 'POST':
+      case 'PUT':
         // Get format MIME type form HTTP Content type header.
         $parts = explode(';', $_SERVER['CONTENT_TYPE'], 2);
         $format = restws_format_mimetype($parts[0]);
@@ -263,11 +263,11 @@ function restws_page_callback($resource, $page_callback = NULL) {
   }
   if ($format) {
     switch ($_SERVER['REQUEST_METHOD']) {
-      case 'PUT':
+      case 'POST':
         $op = 'create';
         break;
 
-      case 'POST':
+      case 'PUT':
         $op = 'update';
         break;
 
