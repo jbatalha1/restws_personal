@@ -263,10 +263,15 @@ class RestWSFormatXML extends RestWSBaseFormat {
           }
         }
         elseif ($property instanceof EntityValueWrapper) {
-          $escaped = $doc->createTextNode($property->value());
-          $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
-          $element->appendChild($escaped);
-          $parent->appendChild($element);
+          // Only primitive data types are allowed here. There might be complex
+          // arrays/objects in EntityValueWrapper if no property information is
+          // provided (example: the "data" property of commerce_price fields.
+          if (is_scalar($property->value())) {
+            $escaped = $doc->createTextNode($property->value());
+            $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
+            $element->appendChild($escaped);
+            $parent->appendChild($element);
+          }
         }
         elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
           $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
