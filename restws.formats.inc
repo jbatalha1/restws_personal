@@ -109,7 +109,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * Creates a new resource.
    */
   public function createResource($resourceController, $data) {
-    $values = $this->unserialize($data);
+    $values = $this->unserialize($resourceController->propertyInfo(), $data);
     $id = $resourceController->create($values);
     $ref = self::getResourceReference($resourceController->resource(), $id);
     return $this->serialize($ref);
@@ -119,7 +119,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * Updates a resource.
    */
   public function updateResource($resourceController, $id, $data) {
-    $values = $this->unserialize($data);
+    $values = $this->unserialize($resourceController->propertyInfo(), $data);
     $resourceController->update($id, $values);
     // Return an empty representation.
     return $this->serialize(array());
@@ -152,6 +152,8 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
 
   /**
    * Gets a simple PHP array using URI references for some wrapped data.
+   *
+   * This is the counter-part of self::getPropertyValues().
    */
   public static function getData($wrapper) {
     $data = array();
@@ -179,11 +181,108 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   }
 
   public static function getResourceReference($resource, $id) {
-    return array(
+    $return = array(
       'uri' => restws_resource_uri($resource, $id),
       'id' => $id,
       'resource' => $resource,
     );
+    if (module_exists('uuid') && entity_get_info($resource)) {
+      $ids = entity_get_uuid_by_id($resource, array($id));
+      if ($id = reset($ids)) {
+        $return['uuid'] = $id;
+      }
+    }
+    return $return;
+  }
+
+  /**
+   * Transforms simple-array data values to valid entity property values.
+   *
+   * This is the counter-part of self::getData(), thus it converts resource
+   * references to the required value(s).
+   *
+   * @param array $values
+   *   The array representation of the data values.
+   * @param $property_info
+   *   The property info array of the entity type for which we are transforming
+   *   the values.
+   */
+  protected function getPropertyValues(array &$values, $property_info) {
+    foreach ($values as $name => &$property_value) {
+      if (isset($property_info[$name]) && $info = $property_info[$name]) {
+
+        // Check if there is a resource array and if the property has a type.
+        if (is_array($property_value) && isset($info['type'])) {
+
+          // Check if the field is a list or a single value field.
+          if (entity_property_list_extract_type($info['type'])) {
+            // Check if the list values consist of structure wrappers.
+            if (array_key_exists('property info', $info)) {
+              foreach ($property_value as &$list_values) {
+                $this->getPropertyValues($list_values, $info['property info']);
+              }
+            }
+            else {
+              $list_type = entity_property_list_extract_type($info['type']);
+              foreach ($property_value as &$list_value) {
+                $list_value = $this->getResourceReferenceValue($list_type, $list_value);
+              }
+            }
+          }
+          else {
+            // Check if the property is a structure wrapper.
+            if (array_key_exists('property info', $info)) {
+              $this->getPropertyValues($property_value, $info['property info']);
+            }
+            else {
+              $property_value = $this->getResourceReferenceValue($info['type'], $property_value);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Gets the resource reference value.
+   *
+   * @param $type
+   *   The data type of the reference property.
+   * @param array $reference
+   *   The input data specifying the resource reference in one supported way.
+   *
+   * @return mixed
+   *   The value to be set for the reference. Usually this is an entity or
+   *   resource id, but for generic entity references it's an
+   *   EntityDrupalWrapper.
+   *
+   * @see RestWSBaseFormat::getResourceReference()
+   */
+  protected function getResourceReferenceValue($type, array $reference) {
+
+    if (isset($reference['id']) && $type != 'entity') {
+      return $reference['id'];
+    }
+    // Handle setting generic entity references, i.e. of type entity.
+    elseif ($type == 'entity' && isset($reference['id']) && isset($reference['resource'])) {
+      if (!entity_get_info($reference['resource'])) {
+        throw new RestWSException('Invalid resource for entity reference given.', 406);
+      }
+      return entity_metadata_wrapper($reference['resource'], $reference['id']);
+    }
+    elseif (isset($reference['uri'])) {
+      // @todo: Implement setting references by URI by parsing resource/id from
+      // the URI.
+    }
+    elseif (isset($reference['uuid']) && module_exists('uuid') && $type != 'entity') {
+      $ids = entity_get_id_by_uuid($type, array($reference['uuid']));
+      if (!$ids) {
+        throw new RestWSException('Invalid UUID for resource reference given.', 406);
+      }
+      return reset($ids);
+    }
+
+    throw new RestWSException('Invalid value for resource reference given.', 406);
   }
 }
 
@@ -216,8 +315,10 @@ class RestWSFormatJSON extends RestWSBaseFormat {
     return drupal_json_encode($values);
   }
 
-  public function unserialize($data) {
-    return drupal_json_decode($data);
+  public function unserialize($properties, $data) {
+    $values = drupal_json_decode($data);
+    $this->getPropertyValues($values, $properties);
+    return $values;
   }
 }
 
@@ -241,7 +342,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
    * Creates a new resource.
    */
   public function createResource($resourceController, $data) {
-    $values = $this->unserialize($data);
+    $values = $this->unserialize($resourceController->propertyInfo(), $data);
     $id = $resourceController->create($values);
 
     $xml = new DOMDocument('1.0', 'utf-8');
@@ -275,18 +376,56 @@ class RestWSFormatXML extends RestWSBaseFormat {
     return $xml->saveXML();
   }
 
-  public function unserialize($data) {
+  public function unserialize($properties, $data) {
     $xml = simplexml_load_string($data);
-    return self::xmlToArray($xml);
+    return $this->xmlToArray($properties, $xml);
   }
 
   /**
    * Turns the xml structure into an array of values.
    */
-  public static function xmlToArray(SimpleXMLElement $xml) {
-    $children = $xml->children();
+  public function xmlToArray($properties, SimpleXMLElement $xml, $listItemType = NULL) {
     foreach ($xml->children() as $name => $element) {
-      $result[$name] = self::xmlToArray($element);
+      // Check if isset type or we are processing a list.
+      if (isset($properties[$name]['type']) || isset($listItemType)) {
+        // If we are processing a list, then set the type of the list and save
+        // the results into a a numeric array.
+        if (isset($listItemType)) {
+          $type = $listItemType;
+          $result_pointer = &$result[];
+        }
+        else {
+          $type = $properties[$name]['type'];
+          $result_pointer = &$result[$name];
+        }
+
+        // Check if the type is a list.
+        if (entity_property_list_extract_type($type)) {
+          $result_pointer = $this->xmlToArray($properties, $element, entity_property_list_extract_type($type));
+        }
+        else {
+          $attributes = $element->attributes();
+          $values['id'] = (string)$attributes['id'];
+          $values['resource'] = (string)$attributes['resource'];
+          $values['uri'] = $this->xmlToArray($properties, $element);
+          $id = $this->getResourceReferenceValue($type, $values);
+          // If an id could be extracted, then the a resource array was send.
+          if ($id !== FALSE) {
+            $result_pointer = $id;
+          }
+          else {
+            // If no ID could be extracted, then save the inner text content of
+            // the node, which is saved in the $values['uri'].
+            $result_pointer = $values['uri'];
+          }
+        }
+      }
+      else {
+        $result[$name] = $this->xmlToArray($properties, $element);
+      }
+      foreach ($xml->attributes() as $attribute_name => $attribute_value) {
+        $result[$attribute_name] = $attribute_value;
+      }
     }
     if (!isset($result)) {
       $result = ($string = (string) $xml) ? $string : NULL;

@@ -117,7 +117,7 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
   }
 
   public function propertyInfo() {
-    return entity_get_property_info($this->entityType);
+    return entity_get_all_property_info($this->entityType);
   }
 
   public function wrapper($id) {
