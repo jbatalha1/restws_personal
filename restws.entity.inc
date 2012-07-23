@@ -70,6 +70,23 @@ interface RestWSResourceControllerInterface {
   public function delete($id);
 
   /**
+   * Query for a list of resources.
+   *
+   * If a resource doesn't want to implement querying, then it should throw a
+   * RestWSException with the 501 HTTP status code.
+   *
+   * @param array $filters
+   *   A list of properties to query for, or an empty array if all resources
+   *   should be returned.
+   * @param array $meta_controls
+   *   @todo Control commands for sorting or paging.
+   *
+   * @return array
+   *   An array containing the ids of the matching resources.
+   */
+  public function query($filters = array(), $meta_controls = array());
+
+  /**
    * Determines access for a given operation and resource.
    *
    * @param string $op
@@ -154,6 +171,23 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
 
   public function delete($id) {
     entity_delete($this->entityType, $id);
+  }
+
+  /**
+   * Implements RestWSResourceControllerInterface::query().
+   */
+  public function query($filters = array(), $meta_controls = array()) {
+    $limit = variable_get("restws_query_max_limit", 100);
+
+    $query =  new EntityFieldQuery();
+    $query->entityCondition('entity_type', $this->resource());
+    $query->pager($limit);
+    $query_result = $query->execute();
+    $query_result = isset($query_result[$this->resource()]) ? $query_result[$this->resource()] : array();
+
+    $result = array_keys($query_result);
+
+    return $result;
   }
 
   public function access($op, $id) {

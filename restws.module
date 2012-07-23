@@ -119,12 +119,19 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
       'payload' => &$payload,
     );
     drupal_alter('restws_request', $request);
-    if (user_access('access resource ' . $resource_name) && $resource->access($op, $id)) {
+
+    // Since there is no access callback for query we need to use view.
+    $access_op = $op == 'query' ? 'view' : $op;
+
+    if (user_access('access resource ' . $resource_name) && $resource->access($access_op, $id)) {
       try {
         $method = $op . 'Resource';
         if ($op == 'create') {
           print $format->$method($resource, $payload);
           drupal_add_http_header('Status', '201 Created');
+        }
+        elseif ($op == 'query') {
+          print $format->$method($resource, $payload);
         }
         else {
           print $format->$method($resource, $id, $payload);
@@ -216,6 +223,28 @@ function restws_menu_alter(&$items) {
         );
       }
     }
+
+    // Querying menu paths.
+    foreach (array_keys(restws_get_format_info()) as $format) {
+      // Resource base path urls with suffix.json and .xml for indexing.
+      if (isset($items["$resource.$format"])) {
+        // Prepend the page callback and the resource to the page arguments.
+        if (!isset($items["$resource.$format"]['page arguments'])) {
+          $items["$resource.$format"]['page arguments'] = array();
+        }
+        array_unshift($items["$resource.$format"]['page arguments'], $resource, $items["$resource.$format"]['page callback']);
+        $items["$resource.$format"]['page callback'] = 'restws_page_callback';
+
+      }
+      else {
+        $items["$resource.$format"] = array(
+          'page callback' => 'restws_page_callback',
+          'page arguments' => array($resource),
+          'access callback' => TRUE,
+          'type' => MENU_CALLBACK,
+        );
+      }
+    }
   }
 }
 
@@ -224,10 +253,15 @@ function restws_menu_alter(&$items) {
  */
 function restws_page_callback($resource, $page_callback = NULL) {
   $id_arg = arg(1);
+  $resource_arg = arg(0);
   $format = FALSE;
-  // Check for a appended .format string.
+  $id = NULL;
+  // Check for an appended .format string.
   if (($pos = strpos($id_arg, '.')) && $format_name = substr($id_arg, $pos + 1)) {
     $id = substr($id_arg, 0, $pos);
+    $format = restws_format($format_name);
+  }
+  elseif (($pos = strpos($resource_arg, '.')) && $format_name = substr($resource_arg, $pos + 1)) {
     $format = restws_format($format_name);
   }
   else {
@@ -276,7 +310,12 @@ function restws_page_callback($resource, $page_callback = NULL) {
         break;
 
       default:
-        $op = 'view';
+        if (!empty($id)) {
+          $op = 'view';
+        }
+        else {
+          $op  = 'query';
+        }
     }
     $payload = file_get_contents('php://input');
     if ($file = variable_get('restws_debug_log')) {

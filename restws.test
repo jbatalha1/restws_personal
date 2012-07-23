@@ -166,6 +166,37 @@ class RestWSTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Tests resource querying.
+   */
+  function testQuerying() {
+    $account = $this->drupalCreateUser(array('access content',
+        'bypass node access', 'access resource node')
+    );
+    $this->drupalLogin($account);
+    $nodes = array();
+    for($i = 0; $i < 5; $i++) {
+      $title = "node$i";
+      $nodes[$i] = $this->drupalCreateNode(array('title' => $title));
+    }
+
+    // Retrieve a list of nodes with json.
+    $result = $this->httpRequest('node.json', 'GET', $account);
+    $result_nodes = drupal_json_decode($result);
+    foreach ($result_nodes['list'] as $key => $node) {
+      $this->assertEqual($nodes[$key]->title, $node['title'], "Node title $key was received correctly.");
+    }
+    $this->assertResponse('200', 'HTTP response code is correct.');
+    $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/json', 'HTTP content type is correct.');
+
+    // Retrieve a list of nodes with xml.
+    $result = $this->drupalGet("node.xml", array(), array('Accept: application/xml'));
+    $this->assertRaw('<list>', 'XML has been generated.');
+    for($i = 0; $i < 5; $i++) {
+      $this->assertRaw("<title>node$i</title>", 'XML has been generated.');
+    }
+  }
+
+  /**
    * Test that sensitive user data is hidden for the "access user profiles"
    * permission.
    */

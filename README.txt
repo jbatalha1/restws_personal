@@ -75,6 +75,15 @@ Design goals and concept
 
      * Delete: HTTP DELETE /<entity type name>/<entity id>
 
+ * The module also supports querying for resources:
+
+        Query: HTTP GET /<entity type name>.<format>
+        or     HTTP GET /<entity type name> (requires HTTP Accept
+        header set to the MIME type of <format>)
+
+   Currently it only outputs all available entities but adding filters for types
+   or functions to order the list are planned for the near future.
+
  * The representation <format> can be json, xml etc.
 
  * The usual Drupal permission system is respected, thus permissions are checked

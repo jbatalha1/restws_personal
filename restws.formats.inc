@@ -58,6 +58,23 @@ interface RestWSFormatInterface {
    */
   public function deleteResource($resourceController, $id);
 
+  /**
+   * Query for a resource.
+   *
+   * If a format doesn't want to implement querying, then it should throw an
+   * RestWSException with the 501 HTTP status code.
+   *
+   * @param RestWSResourceControllerInterface $resourceController
+   *   The controller used to query the resource.
+   * @param array $parameters
+   *   The parameters for the query or an empty array to return all existing
+   *   resources.
+   *
+   * @return string
+   *   The serialized representation of a list of resources.
+   */
+  public function queryResource($resourceController, $parameters);
+
 
   /**
    * Returns the mime type of this format, e.g. 'application/json' or
@@ -115,6 +132,18 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     $resourceController->delete($id);
     // Return an empty representation.
     return $this->serialize(array());
+  }
+
+  /**
+   * Implements RestWSFormatInterface::queryResource().
+   */
+  public function queryResource($resourceController, $parameters) {
+    $result = $resourceController->query($parameters, array());
+    $values = array();
+    foreach ($result as $id) {
+      $values['list'][] = self::getData($resourceController->wrapper($id));
+    }
+    return $this->serialize($values);
   }
 
   public function mimeType() {
@@ -218,6 +247,24 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml = new DOMDocument('1.0', 'utf-8');
     $element = $xml->createElement('uri');
     self::setXMLReference($element, $resourceController->resource(), $id);
+    $xml->appendChild($element);
+    return $xml->saveXML();
+  }
+
+  /**
+   * Overrides RestWSBaseFormat::queryResource().
+   */
+  public function queryResource($resourceController, $parameters) {
+    $xml = new DOMDocument('1.0', 'utf-8');
+    $element = $xml->createElement('list');
+
+    $values = $resourceController->query($parameters, array());
+    foreach ($values as $id) {
+      $item = $xml->createElement($resourceController->resource());
+      self::addToXML($xml, $item, $resourceController->wrapper($id));
+      $element->appendChild($item);
+    }
+
     $xml->appendChild($element);
     return $xml->saveXML();
   }
@@ -337,6 +384,10 @@ class RestWSFormatRDF extends RestWSBaseFormat {
   }
 
   public function updateResource($resourceController, $id, $data) {
+    throw new RestWSException('Not implemented', 501);
+  }
+
+  public function queryResource($resourceController, $parameters) {
     throw new RestWSException('Not implemented', 501);
   }
 
