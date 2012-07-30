@@ -79,7 +79,7 @@ interface RestWSResourceControllerInterface {
    *   A list of properties to query for, or an empty array if all resources
    *   should be returned.
    * @param array $meta_controls
-   *   @todo Control commands for sorting or paging.
+   *   @see restws_meta_controls()
    *
    * @return array
    *   An array containing the ids of the matching resources.
@@ -182,7 +182,28 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
     $query =  new EntityFieldQuery();
     $query->entityCondition('entity_type', $this->resource());
     $query->pager($limit);
-    $query_result = $query->execute();
+
+    foreach ($filters as $filter => $value) {
+      $this->propertyQueryOperation($query, 'Condition', $filter, $value);
+    }
+
+    $rest_controls = restws_meta_controls();
+    foreach ($meta_controls as $control_name => $property) {
+      switch ($control_name) {
+        case $rest_controls['sort']:
+          $direction = isset($meta_controls[$rest_controls['direction']]) ? $meta_controls[$rest_controls['direction']] : 'ASC';
+          $this->propertyQueryOperation($query, 'OrderBy', $property, $direction);
+          break;
+      }
+    }
+
+    // Catch any errors, like wrong keywords or properties.
+    try {
+      $query_result = $query->execute();
+    }
+    catch (PDOException $exception) {
+      throw new RestWSException($exception->getMessage(), 412);
+    }
     $query_result = isset($query_result[$this->resource()]) ? $query_result[$this->resource()] : array();
 
     $result = array_keys($query_result);
@@ -196,5 +217,44 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
 
   public function resource() {
     return $this->entityType;
+  }
+
+  /**
+   * Helper function which takes care of distinguishing between fields and
+   * entity properties and executes the right EntityFieldQuery function for it.
+   *
+   * @param EntityFieldQuery $query
+   *   The EntityFieldQuery pointer which should be used.
+   *
+   * @param string $operation
+   *   The general function name, without the words 'property' or 'field'.
+   *
+   * @param string $property
+   *   The property or field which should be used.
+   *
+   * @param string $value
+   *   The value for the function.
+   */
+  protected function propertyQueryOperation(EntityFieldQuery $query, $operation, $property, $value) {
+    $properties = $this->propertyInfo();
+
+    // If field is not set, then the filter is a property and we can extract
+    // the schema field from the property array.
+    if (empty($properties[$property]['field'])) {
+      $column = $properties[$property]['schema field'];
+      $operation = 'property' . $operation;
+      $query->$operation($column, $value);
+    }
+    else {
+      // For fields we need the field info to get the right column for the
+      // query.
+      $field_info = field_info_field($property);
+      $column = array_keys($field_info['columns']);
+      // Just pick the first field column for now.
+      // @todo how can we determine a specific column?
+      $column = $column[0];
+      $operation = 'field' . $operation;
+      $query->$operation($field_info, $column, $value);
+    }
   }
 }

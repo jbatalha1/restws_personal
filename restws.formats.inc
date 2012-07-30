@@ -66,14 +66,13 @@ interface RestWSFormatInterface {
    *
    * @param RestWSResourceControllerInterface $resourceController
    *   The controller used to query the resource.
-   * @param array $parameters
-   *   The parameters for the query or an empty array to return all existing
-   *   resources.
+   * @param array $payload
+   *   An optional way to pass the query parameters.
    *
    * @return string
    *   The serialized representation of a list of resources.
    */
-  public function queryResource($resourceController, $parameters);
+  public function queryResource($resourceController, $payload);
 
 
   /**
@@ -137,8 +136,9 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   /**
    * Implements RestWSFormatInterface::queryResource().
    */
-  public function queryResource($resourceController, $parameters) {
-    $result = $resourceController->query($parameters, array());
+  public function queryResource($resourceController, $payload) {
+    $result = $this->query($resourceController);
+
     $values = array();
     foreach ($result as $id) {
       $values['list'][] = self::getData($resourceController->wrapper($id));
@@ -193,6 +193,25 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       }
     }
     return $return;
+  }
+
+  /**
+   * Queries for resources and returns an array with the resulting ids.
+   *
+   * @param RestWSResourceControllerInterface $resourceController
+   *   The controller used to query for the resource.
+   *
+   * @return array
+   *   A list containing the ids of the matching resources.
+   */
+  protected function query($resourceController) {
+    // Get the parameter from the URL.
+    $parameters = drupal_get_query_parameters();
+
+    $properties = $resourceController->propertyInfo();
+    $parameters = $this->splitParameters($properties, $parameters);
+
+    return $resourceController->query($parameters['filters'], $parameters['meta_controls']);
   }
 
   /**
@@ -284,6 +303,51 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
 
     throw new RestWSException('Invalid value for resource reference given.', 406);
   }
+
+  /**
+   * Splits a query parameter into two sub arrays containing the filters and
+   * meta controls.
+   *
+   * @param array $properties
+   *   An array containing the properties of the resource.
+   *
+   * @param array $parameters
+   *   An array which contains filters and meta controls.
+   *
+   * @return array
+   *   An array containing two sub arrays, one for filters and one for meta
+   *   controls with corresponding keys.
+   *
+   * @throws RestWSException
+   *   If a filter isn't valid, the function will throw a RestWSException with
+   *   the 412 HTTP status code.
+   */
+  protected function splitParameters($properties, array $parameters) {
+    $meta_controls = array();
+    $rest_controls = restws_meta_controls();
+    foreach ($parameters as $control_name => $property) {
+      if (isset($rest_controls[$control_name])) {
+        $meta_controls[$control_name] = $property;
+        unset($parameters[$control_name]);
+      }
+    }
+
+    $filters = array();
+    foreach ($parameters as $parameter => $value) {
+      // Check if the property is prefixed.
+      if (substr($parameter, 0, 9) == 'property_') {
+        $parameter = substr($parameter, 9, strlen($parameter)-9);
+      }
+
+      // If the parameter doesn't exist, we can not filter for and need to
+      // notify the client about it.
+      if (!isset($properties[$parameter])) {
+        throw new RestWSException('Not a valid filter: ' . $parameter, 412);
+      }
+      $filters[$parameter] = $value;
+    }
+    return array('meta_controls' => $meta_controls, 'filters' => $filters);
+  }
 }
 
 /**
@@ -355,11 +419,11 @@ class RestWSFormatXML extends RestWSBaseFormat {
   /**
    * Overrides RestWSBaseFormat::queryResource().
    */
-  public function queryResource($resourceController, $parameters) {
+  public function queryResource($resourceController, $payload) {
     $xml = new DOMDocument('1.0', 'utf-8');
     $element = $xml->createElement('list');
 
-    $values = $resourceController->query($parameters, array());
+    $values = $this->query($resourceController);
     foreach ($values as $id) {
       $item = $xml->createElement($resourceController->resource());
       self::addToXML($xml, $item, $resourceController->wrapper($id));

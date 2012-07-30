@@ -75,15 +75,6 @@ Design goals and concept
 
      * Delete: HTTP DELETE /<entity type name>/<entity id>
 
- * The module also supports querying for resources:
-
-        Query: HTTP GET /<entity type name>.<format>
-        or     HTTP GET /<entity type name> (requires HTTP Accept
-        header set to the MIME type of <format>)
-
-   Currently it only outputs all available entities but adding filters for types
-   or functions to order the list are planned for the near future.
-
  * The representation <format> can be json, xml etc.
 
  * The usual Drupal permission system is respected, thus permissions are checked
@@ -94,6 +85,50 @@ Design goals and concept
    optional HTTP Basic Authentication module (restws_auth_basic) that performs
    a user login with the credentials provided via the usual HTTP headers.
 
+Querying
+--------
+The module also supports querying for resources:
+
+  Query: HTTP GET /<entity type name>.<format>?<filter>=<value1>&
+  <meta_control>=<value2>
+  or     HTTP GET /<entity type name>?<filter>=<value1>&<meta_control>=
+  <value2> (requires HTTP Accept header set to the MIME type of <format>)
+
+By default RestWS simply outputs all resources available for the given type:
+
+/user.json
+
+The example above will output a JSON object containing up to 100 users
+available in an sub object called list. The XML output will simply create
+tags with the given type in parent type, which also is called list. The hard
+limit of 100 resources per request ensures that the database and webserver
+won't overload. The hard limit is defined by the system variable
+restws_query_max_limit, which can be overridden if necessary.
+
+You can filter for certain resources by passing parameters in the URL. These
+parameters consist of properties of the resource and a value for that property.
+The value of a property is always the schema field of it. So if you want to
+filter for an author, the value of the filter has to be the uid. If you want to
+filter for nodes with a certain term, then you have to use the tid of that term.
+You can only specify one value, so filtering for more than one tag, is currently
+not supported.
+
+/node.json?type=article&field_tags=17&author=1
+
+If a certain property isn't valid an HTTP status code 412 will be returned
+containing an error message.
+
+Additionally to the filters RestWS also supports meta controls, which allow you
+to control your output. Currently only sort and direction are supported.
+This two meta controls allow you to sort your output by a specific property of
+your resource for a certain direction. By default the direction will be
+ascending but if want to sort your output descending you have to use the keyword
+DESC for the meta control direction.
+
+/taxonomy_term.json?sort=tid&direction=DESC
+
+If one of your resource properties collides with one of RestWS meta control
+keywords, you have prefix it with property_, when specifying it as filter.
 
 Debugging
 ---------

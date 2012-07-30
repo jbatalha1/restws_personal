@@ -169,6 +169,8 @@ class RestWSException extends Exception {
         return '404 Not Found';
       case 406:
         return '406 Not Acceptable';
+      case 412:
+        return '412 Precondition Failed';
       default:
         return '500 Internal Server Error';
     }
@@ -394,4 +396,14 @@ function restws_module_implements_alter(&$implementations, $hook) {
     unset($implementations['restws']);
     $implementations['restws'] = $group;
   }
+}
+
+/**
+ * Return all available meta controls.
+ */
+function restws_meta_controls() {
+  return array(
+    'sort' => 'sort',
+    'direction' => 'direction',
+  );
 }
