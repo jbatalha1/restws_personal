@@ -139,7 +139,9 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   public function queryResource($resourceController, $payload) {
     $result = $this->query($resourceController);
 
-    $values = array();
+    $values = $this->generateQueryURIs($resourceController);
+
+
     foreach ($result as $id) {
       $values['list'][] = self::getData($resourceController->wrapper($id));
     }
@@ -336,7 +338,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     foreach ($parameters as $parameter => $value) {
       // Check if the property is prefixed.
       if (substr($parameter, 0, 9) == 'property_') {
-        $parameter = substr($parameter, 9, strlen($parameter)-9);
+        $parameter = substr($parameter, 9, strlen($parameter) - 9);
       }
 
       // If the parameter doesn't exist, we can not filter for and need to
@@ -347,6 +349,63 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       $filters[$parameter] = $value;
     }
     return array('meta_controls' => $meta_controls, 'filters' => $filters);
+  }
+
+  /**
+   * Generates all navigation links for querying.
+   *
+   * @param RestWSResourceControllerInterface $resourceController
+   *   The controller used to query the resource.
+   *
+   * @return array
+   *   An array containing all navigation links.
+   *
+   * @throws RestWSException
+   *   If the page is out of range the function will throw a new RestWSException
+   *   with HTTP status code 404.
+   */
+  protected function generateQueryURIs(RestWSResourceControllerInterface $resourceController) {
+    $parameters = drupal_get_query_parameters();
+    $rest_controls = restws_meta_controls();
+
+    $split_parameters = $this->splitParameters($resourceController->propertyInfo(), $parameters);
+
+    $count = $resourceController->count($split_parameters['filters']);
+    $limit = isset($parameters[$rest_controls['limit']]) ? $parameters[$rest_controls['limit']] : NULL;
+    $limit = $resourceController->limit($limit);
+    $page = isset($parameters[$rest_controls['page']]) ? $parameters[$rest_controls['page']] : 0;
+
+    $last = ceil($count / $limit) - 1;
+
+    if ($page > $last || $page < 0) {
+      throw new RestWSException('Page doesn\'t exist.', 404);
+    }
+
+    $uris = array();
+    $options = array(
+      'absolute' => TRUE,
+      'alias' => TRUE,
+      'query' => &$parameters,
+    );
+
+    $uris['self'] = url($resourceController->resource(), $options);
+    $parameters['page'] = 0;
+    $uris['first'] = url($resourceController->resource(), $options);
+    $parameters['page'] = $last;
+    $uris['last'] = url($resourceController->resource(), $options);
+
+
+    if ($page != 0) {
+      $parameters['page'] = $page - 1;
+      $uris['prev'] = url($resourceController->resource(), $options);
+    }
+
+    if ($page != $last) {
+      $parameters['page'] = $page + 1;
+      $uris['next'] = url($resourceController->resource(), $options);
+    }
+
+    return $uris;
   }
 }
 
@@ -422,6 +481,15 @@ class RestWSFormatXML extends RestWSBaseFormat {
   public function queryResource($resourceController, $payload) {
     $xml = new DOMDocument('1.0', 'utf-8');
     $element = $xml->createElement('list');
+
+    $links = $this->generateQueryURIs($resourceController);
+
+    foreach ($links as $rel => $link) {
+      $item = $xml->createElement('link');
+      $item->setAttribute('rel', $rel);
+      $item->setAttribute('href', $link);
+      $element->appendChild($item);
+    }
 
     $values = $this->query($resourceController);
     foreach ($values as $id) {

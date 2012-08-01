@@ -118,6 +118,9 @@ not supported.
 If a certain property isn't valid an HTTP status code 412 will be returned
 containing an error message.
 
+Meta Controls
+-------------
+
 Additionally to the filters RestWS also supports meta controls, which allow you
 to control your output. Currently only sort and direction are supported.
 This two meta controls allow you to sort your output by a specific property of
@@ -126,6 +129,16 @@ ascending but if want to sort your output descending you have to use the keyword
 DESC for the meta control direction.
 
 /taxonomy_term.json?sort=tid&direction=DESC
+
+You can limit the results with the meta control limit which is by default 100.
+To navigate through the generated pages, you have to use meta control page.
+
+/node.json?limit=10&page=3
+
+The output always has a self, a first and a last element, which contain a link
+to the current, first and last page. If your current page isn't the last or the
+first one, RestWS will also generate prev and next links. For xml they can be
+found in the tags <link /> in the first hierarchy.
 
 If one of your resource properties collides with one of RestWS meta control
 keywords, you have prefix it with property_, when specifying it as filter.

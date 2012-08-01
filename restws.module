@@ -131,6 +131,9 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
           drupal_add_http_header('Status', '201 Created');
         }
         elseif ($op == 'query') {
+          if (!$resource instanceof RestWSQueryResourceControllerInterface) {
+            throw new RestWSException('Quering not available for this resources', 501);
+          }
           print $format->$method($resource, $payload);
         }
         else {
@@ -405,5 +408,7 @@ function restws_meta_controls() {
   return array(
     'sort' => 'sort',
     'direction' => 'direction',
+    'page' => 'page',
+    'limit' => 'limit',
   );
 }

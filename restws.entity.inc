@@ -70,23 +70,6 @@ interface RestWSResourceControllerInterface {
   public function delete($id);
 
   /**
-   * Query for a list of resources.
-   *
-   * If a resource doesn't want to implement querying, then it should throw a
-   * RestWSException with the 501 HTTP status code.
-   *
-   * @param array $filters
-   *   A list of properties to query for, or an empty array if all resources
-   *   should be returned.
-   * @param array $meta_controls
-   *   @see restws_meta_controls()
-   *
-   * @return array
-   *   An array containing the ids of the matching resources.
-   */
-  public function query($filters = array(), $meta_controls = array());
-
-  /**
    * Determines access for a given operation and resource.
    *
    * @param string $op
@@ -105,9 +88,51 @@ interface RestWSResourceControllerInterface {
 }
 
 /**
+ * Specifies query methods for resources.
+ */
+interface RestWSQueryResourceControllerInterface extends RestWSResourceControllerInterface {
+  /**
+   * Query for a list of resources.
+   *
+   * @param array $filters
+   *   A list of properties to query for, or an empty array if all resources
+   *   should be counted.
+   * @param array $meta_controls
+   *   @see restws_meta_controls()
+   *
+   * @return array
+   *   An array containing the ids of the matching resources.
+   */
+  public function query($filters = array(), $meta_controls = array());
+
+  /**
+   * Returns the number of resources available with the given filters.
+   *
+   * @param array $filters
+   *   A list of properties to query for, or an empty array if all resources
+   *   should be returned.
+   *
+   * @return int
+   *   The number of resources available.
+   */
+  public function count($filters = array());
+
+  /**
+   * Returns the limit for the current query.
+   *
+   * @param int $client_limit
+   *   The limit specified in the meta controls or NULL if not set.
+   *
+   * @return int
+   *   The limit of the current limit.
+   */
+  public function limit($client_limit = NULL);
+}
+
+/**
  * Controller for entity-bases resources.
  */
-class RestWSEntityResourceController implements RestWSResourceControllerInterface {
+class RestWSEntityResourceController implements RestWSQueryResourceControllerInterface {
 
   protected $entityType, $entityInfo;
 
@@ -174,28 +199,40 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
   }
 
   /**
-   * Implements RestWSResourceControllerInterface::query().
+   * Implements RestWSQueryResourceControllerInterface::query().
    */
   public function query($filters = array(), $meta_controls = array()) {
-    $limit = variable_get("restws_query_max_limit", 100);
+    $limit = variable_get('restws_query_max_limit', 100);
+    $offset = 0;
 
-    $query =  new EntityFieldQuery();
+    $query = new EntityFieldQuery();
     $query->entityCondition('entity_type', $this->resource());
-    $query->pager($limit);
 
     foreach ($filters as $filter => $value) {
       $this->propertyQueryOperation($query, 'Condition', $filter, $value);
     }
 
     $rest_controls = restws_meta_controls();
-    foreach ($meta_controls as $control_name => $property) {
+    foreach ($meta_controls as $control_name => $value) {
       switch ($control_name) {
         case $rest_controls['sort']:
           $direction = isset($meta_controls[$rest_controls['direction']]) ? $meta_controls[$rest_controls['direction']] : 'ASC';
-          $this->propertyQueryOperation($query, 'OrderBy', $property, $direction);
+          $this->propertyQueryOperation($query, 'OrderBy', $value, $direction);
+          break;
+
+        case $rest_controls['limit']:
+          $limit = $this->limit($value);
+          break;
+
+        case $rest_controls['page']:
+          $offset = $value > 0 ? $value : $offset;
           break;
       }
     }
+
+    // Calculate the offset.
+    $offset *= $limit;
+    $query->range($offset, $limit);
 
     // Catch any errors, like wrong keywords or properties.
     try {
@@ -209,6 +246,36 @@ class RestWSEntityResourceController implements RestWSResourceControllerInterfac
     $result = array_keys($query_result);
 
     return $result;
+  }
+
+
+  /**
+   * Implements RestWSQueryResourceControllerInterface::count().
+   */
+  public function count($filters = array()) {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', $this->resource());
+
+    foreach ($filters as $filter => $value) {
+      $this->propertyQueryOperation($query, 'Condition', $filter, $value);
+    }
+    $query->count();
+
+    return $query->execute();
+  }
+
+  /**
+   * Implements RestWSQueryResourceControllerInterface::limit().
+   */
+  public function limit($client_limit = NULL) {
+    $limit = variable_get('restws_query_max_limit', 100);
+    // Only allow user provided limits smaller than the system hard limit.
+    if (!empty($client_limit) && $client_limit < $limit) {
+      return $client_limit;
+    }
+    else {
+      return $limit;
+    }
   }
 
   public function access($op, $id) {

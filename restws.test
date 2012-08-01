@@ -266,6 +266,27 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     $this->assertEqual($nodes['list'][1]['title'], 'node3', 'Right node title was received.');
     $this->assertEqual($nodes['list'][1]['field_tags'][0]['id'], 1, 'Node has taxonomy term.');
+
+    // Test paging and limiting.
+    $result = $this->httpRequest('node.json', 'GET', $account, array('limit' => 2, 'page' => 0));
+    $result_nodes = drupal_json_decode($result);
+
+    $this->assertTrue(count($result_nodes['list'] > 2), 'Only two elements where returned');
+
+    $this->assertTrue($result_nodes['self'] == url('node', array('absolute' => TRUE, 'query' => array('limit' => 2, 'page' => 0))), 'Self link was generated');
+    $this->assertTrue($result_nodes['first'] == url('node', array('absolute' => TRUE, 'query' => array('limit' => 2, 'page' => 0))), 'First link was generated');
+    $this->assertTrue($result_nodes['last'] == url('node', array('absolute' => TRUE, 'query' => array('limit' => 2, 'page' => 2))), 'Last link was generated');
+    $this->assertTrue($result_nodes['next'] == url('node', array('absolute' => TRUE, 'query' => array('limit' => 2, 'page' => 1))), 'Next link was generated');
+    $this->assertFalse(isset($result_nodes['prev']), 'Prev link was not generated');
+
+    $result = $this->httpRequest('node.json', 'GET', $account, array('limit' => 2, 'page' => 2));
+    $result_nodes = drupal_json_decode($result);
+
+    $this->assertFalse(isset($result_nodes['next']), 'Next link was not generated');
+    $this->assertTrue($result_nodes['prev'] == url('node', array('absolute' => TRUE, 'query' => array('limit' => 2, 'page' => 1))), 'Prev link was generated');
+
+    $result = $this->httpRequest('node.json', 'GET', $account, array('limit' => 2, 'page' => 5));
+    $this->assertResponse('404', 'HTTP response code is correct.');
   }
 
   /**
