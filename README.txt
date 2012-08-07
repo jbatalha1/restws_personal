@@ -36,6 +36,8 @@ Usage / Testing
    nodes). Additionally each resource is protected with a RESTWS permission
    that can be configured at "admin/people/permissions#module-restws".
 
+ * Some example outputs are given in the example_exports folder.
+
 
 Design goals and concept
 ------------------------
