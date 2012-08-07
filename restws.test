@@ -287,6 +287,14 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     $result = $this->httpRequest('node.json', 'GET', $account, array('limit' => 2, 'page' => 5));
     $this->assertResponse('404', 'HTTP response code is correct.');
+
+    // Test meta control full.
+    $result = $this->httpRequest('node.json', 'GET', $account, array('full' => 0));
+    $result_nodes = drupal_json_decode($result);
+
+    foreach ($result_nodes['list'] as $node) {
+      $this->assertTrue($node['uri'] == restws_resource_uri('node', $node['id']), 'Rerence to node ' . $node['id'] . ' was received correctly.');
+    }
   }
 
   /**

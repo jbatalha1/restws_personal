@@ -137,13 +137,27 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * Implements RestWSFormatInterface::queryResource().
    */
   public function queryResource($resourceController, $payload) {
-    $result = $this->query($resourceController);
+    // Get the parameter from the URL.
+    $parameters = drupal_get_query_parameters();
 
-    $values = $this->generateQueryURIs($resourceController);
+    $rest_controls = restws_meta_controls();
+    $properties = $resourceController->propertyInfo();
+    $split_parameters = $this->splitParameters($properties, $parameters);
 
+    $values = $this->generateQueryURIs($resourceController, $parameters, $split_parameters['filters']);
 
-    foreach ($result as $id) {
-      $values['list'][] = self::getData($resourceController->wrapper($id));
+    $full = (isset($split_parameters['meta_controls'][$rest_controls['full']])) ? $split_parameters['meta_controls'][$rest_controls['full']] : 1;
+
+    $result = $resourceController->query($split_parameters['filters'], $split_parameters['meta_controls']);
+    if ($full === '0') {
+      foreach ($result as $id) {
+        $values['list'][] = $this->getResourceReference($resourceController->resource(), $id);
+      }
+    }
+    else {
+      foreach ($result as $id) {
+        $values['list'][] = self::getData($resourceController->wrapper($id));
+      }
     }
     return $this->serialize($values);
   }
@@ -195,25 +209,6 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       }
     }
     return $return;
-  }
-
-  /**
-   * Queries for resources and returns an array with the resulting ids.
-   *
-   * @param RestWSResourceControllerInterface $resourceController
-   *   The controller used to query for the resource.
-   *
-   * @return array
-   *   A list containing the ids of the matching resources.
-   */
-  protected function query($resourceController) {
-    // Get the parameter from the URL.
-    $parameters = drupal_get_query_parameters();
-
-    $properties = $resourceController->propertyInfo();
-    $parameters = $this->splitParameters($properties, $parameters);
-
-    return $resourceController->query($parameters['filters'], $parameters['meta_controls']);
   }
 
   /**
@@ -357,6 +352,12 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * @param RestWSResourceControllerInterface $resourceController
    *   The controller used to query the resource.
    *
+   * @param array $parameters
+   *   The HTTP GET parameters for the query.
+   *
+   * @param array $filters
+   *   The filters for the query.
+   *
    * @return array
    *   An array containing all navigation links.
    *
@@ -364,13 +365,10 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    *   If the page is out of range the function will throw a new RestWSException
    *   with HTTP status code 404.
    */
-  protected function generateQueryURIs(RestWSResourceControllerInterface $resourceController) {
-    $parameters = drupal_get_query_parameters();
+  protected function generateQueryURIs(RestWSResourceControllerInterface $resourceController, array $parameters, array $filters) {
     $rest_controls = restws_meta_controls();
 
-    $split_parameters = $this->splitParameters($resourceController->propertyInfo(), $parameters);
-
-    $count = $resourceController->count($split_parameters['filters']);
+    $count = $resourceController->count($filters);
     $limit = isset($parameters[$rest_controls['limit']]) ? $parameters[$rest_controls['limit']] : NULL;
     $limit = $resourceController->limit($limit);
     $page = isset($parameters[$rest_controls['page']]) ? $parameters[$rest_controls['page']] : 0;
@@ -482,7 +480,12 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml = new DOMDocument('1.0', 'utf-8');
     $element = $xml->createElement('list');
 
-    $links = $this->generateQueryURIs($resourceController);
+    $rest_controls = restws_meta_controls();
+    $parameters = drupal_get_query_parameters();
+    $properties = $resourceController->propertyInfo();
+    $split_parameters = $this->splitParameters($properties, $parameters);
+
+    $links = $this->generateQueryURIs($resourceController, $parameters, $split_parameters['filters']);
 
     foreach ($links as $rel => $link) {
       $item = $xml->createElement('link');
@@ -491,11 +494,23 @@ class RestWSFormatXML extends RestWSBaseFormat {
       $element->appendChild($item);
     }
 
-    $values = $this->query($resourceController);
-    foreach ($values as $id) {
-      $item = $xml->createElement($resourceController->resource());
-      self::addToXML($xml, $item, $resourceController->wrapper($id));
-      $element->appendChild($item);
+    $full = (isset($split_parameters['meta_controls'][$rest_controls['full']])) ? $split_parameters['meta_controls'][$rest_controls['full']] : 1;
+
+    $result = $resourceController->query($split_parameters['filters'], $split_parameters['meta_controls']);
+
+    if ($full === '0') {
+      foreach ($result as $id) {
+        $item = $xml->createElement($resourceController->resource());
+        self::setXMLReference($item, $resourceController->resource(), $id);
+        $element->appendChild($item);
+      }
+    }
+    else {
+      foreach ($result as $id) {
+        $item = $xml->createElement($resourceController->resource());
+        self::addToXML($xml, $item, $resourceController->wrapper($id));
+        $element->appendChild($item);
+      }
     }
 
     $xml->appendChild($element);

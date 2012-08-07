@@ -140,6 +140,12 @@ to the current, first and last page. If your current page isn't the last or the
 first one, RestWS will also generate prev and next links. For xml they can be
 found in the tags <link /> in the first hierarchy.
 
+Sometimes it might be helpful to retrieve only the references to resources of a
+query. You can tell RestWS to output them by setting the meta control full to 0,
+by default it will be 1 and output the whole resources.
+
+/node.json?full=0
+
 If one of your resource properties collides with one of RestWS meta control
 keywords, you have prefix it with property_, when specifying it as filter.
 
