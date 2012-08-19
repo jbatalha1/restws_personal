@@ -229,6 +229,11 @@ class RestWSTestCase extends DrupalWebTestCase {
       if ($i % 3 == 0) {
         $node['field_tags'][LANGUAGE_NONE][]['tid'] = 1;
       }
+
+      // Set a body and the format to full_html for nodes 0 and 4.
+      if ($i % 4 == 0) {
+        $node['body'] = array(LANGUAGE_NONE => array(array('value' => l('foo', 'node'), 'format' => 'full_html')));
+      }
       $nodes[$i] = $this->drupalCreateNode($node);
     }
 
@@ -295,6 +300,16 @@ class RestWSTestCase extends DrupalWebTestCase {
     foreach ($result_nodes['list'] as $node) {
       $this->assertTrue($node['uri'] == restws_resource_uri('node', $node['id']), 'Rerence to node ' . $node['id'] . ' was received correctly.');
     }
+
+    // Test field column queries.
+    $result = $this->httpRequest('node.json', 'GET', $account, array('body[format]' => 'full_html'));
+    $result_nodes = drupal_json_decode($result);
+
+    $this->assertEqual($result_nodes['list'][0]['title'], 'node0', 'Right node title was received.');
+    $this->assertEqual($result_nodes['list'][0]['body']['format'], 'full_html', 'Node has body with full_html.');
+
+    $this->assertEqual($result_nodes['list'][1]['title'], 'node4', 'Right node title was received.');
+    $this->assertEqual($result_nodes['list'][1]['body']['format'], 'full_html', 'Node has body with full_html.');
   }
 
   /**

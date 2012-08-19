@@ -117,6 +117,11 @@ not supported.
 
 /node.json?type=article&field_tags=17&author=1
 
+By default the first field column will be used for the query. If you want
+another column, you can specify it in square brackets.
+
+/node.json?body[format]=filtered_html
+
 If a certain property isn't valid an HTTP status code 412 will be returned
 containing an error message.
 

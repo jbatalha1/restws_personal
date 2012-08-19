@@ -299,7 +299,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    * @param string $property
    *   The property or field which should be used.
    *
-   * @param string $value
+   * @param string|array $value
    *   The value for the function.
    */
   protected function propertyQueryOperation(EntityFieldQuery $query, $operation, $property, $value) {
@@ -316,12 +316,20 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
       // For fields we need the field info to get the right column for the
       // query.
       $field_info = field_info_field($property);
-      $column = array_keys($field_info['columns']);
-      // Just pick the first field column for now.
-      // @todo how can we determine a specific column?
-      $column = $column[0];
       $operation = 'field' . $operation;
-      $query->$operation($field_info, $column, $value);
+      if (is_array($value)) {
+        // Specific column filters are given, so add a query condition for each
+        // one of them.
+        foreach ($value as $column => $val) {
+          $query->$operation($field_info, $column, $val);
+        }
+      }
+      else {
+        // Just pick the first field column for the operation.
+        $columns = array_keys($field_info['columns']);
+        $column = $columns[0];
+        $query->$operation($field_info, $column, $value);
+      }
     }
   }
 }
