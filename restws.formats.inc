@@ -381,26 +381,24 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
 
     $uris = array();
     $options = array(
-      'absolute' => TRUE,
-      'alias' => TRUE,
       'query' => &$parameters,
     );
 
-    $uris['self'] = url($resourceController->resource(), $options);
+    $uris['self'] = restws_resource_uri($resourceController->resource(), null, $options);
     $parameters['page'] = 0;
-    $uris['first'] = url($resourceController->resource(), $options);
+    $uris['first'] = restws_resource_uri($resourceController->resource(), null, $options);
     $parameters['page'] = $last;
-    $uris['last'] = url($resourceController->resource(), $options);
+    $uris['last'] = restws_resource_uri($resourceController->resource(), null, $options);
 
 
     if ($page != 0) {
       $parameters['page'] = $page - 1;
-      $uris['prev'] = url($resourceController->resource(), $options);
+      $uris['prev'] = restws_resource_uri($resourceController->resource(), null, $options);
     }
 
     if ($page != $last) {
       $parameters['page'] = $page + 1;
-      $uris['next'] = url($resourceController->resource(), $options);
+      $uris['next'] = restws_resource_uri($resourceController->resource(), null, $options);
     }
 
     return $uris;

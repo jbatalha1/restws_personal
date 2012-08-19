@@ -7,12 +7,18 @@
 
 /**
  * Returns info about all defined resources.
+ *
+ * @param string $resource
+ *   By default null, else the info for the given resource will be returned.
  */
-function restws_get_resource_info() {
+function restws_get_resource_info($resource = NULL) {
   $info = &drupal_static(__FUNCTION__);
   if (!isset($info)) {
     $info = module_invoke_all('restws_resource_info');
     drupal_alter('restws_resource_info', $info);
+  }
+  if (!empty($resource)) {
+    return $info[$resource];
   }
   return $info;
 }
@@ -351,10 +357,24 @@ function restws_page_callback($resource, $page_callback = NULL) {
 
 /**
  * Returns the URI used for the given resource.
+ *
+ * @param string $resource
+ *   The resource for which the URI should be returned.
+ * @param int $id
+ *   The resource ID or NULL if only the base path should be returned.
+ * @param array $options
+ *   Optional array that is passed to url().
  */
-function restws_resource_uri($resource, $id) {
+function restws_resource_uri($resource, $id = NULL, array $options = array()) {
+  $info = restws_get_resource_info($resource);
+  $basepath = isset($info['menu_path']) ? $info['menu_path'] : $resource;
+  $sub_path = isset($id) ? "/$id" : '';
+
   // Avoid having the URLs aliased.
-  return url($resource . '/' . $id, array('absolute' => TRUE, 'alias' => TRUE));
+  $base_options = array('absolute' => TRUE, 'alias' => TRUE);
+  $options += $base_options;
+
+  return url($basepath . $sub_path, $options);
 }
 
 /**
