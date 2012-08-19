@@ -185,7 +185,8 @@ class RestWSException extends Exception {
  */
 function restws_menu_alter(&$items) {
   foreach (restws_get_resource_info() as $resource => $info) {
-    // @todo document 'menu path'
+    // Resource full path (e.g. /node/% or /user/%) for accessing specific
+    // resources.
     $menu_path = isset($info['menu_path']) ? $info['menu_path'] . '/%' : $resource . '/%';
     // Replace existing page callbacks with our own (e.g. node/%)
     if (isset($items[$menu_path])) {
@@ -209,40 +210,39 @@ function restws_menu_alter(&$items) {
       );
     }
     // Resource base path (e.g. /node or /user) for creating resources.
-    // @todo fix 'menu path'
-    if (!isset($info['menu_path'])) {
-      if (isset($items[$resource])) {
-        // Prepend the page callback and the resource to the page arguments.
-        if (!isset($items[$resource]['page arguments'])) {
-          $items[$resource]['page arguments'] = array();
-        }
-        array_unshift($items[$resource]['page arguments'], $resource, $items[$resource]['page callback']);
-        $items[$resource]['page callback'] = 'restws_page_callback';
-      }
-      else {
-        $items[$resource] = array(
-          'page callback' => 'restws_page_callback',
-          'page arguments' => array($resource),
-          'access callback' => TRUE,
-          'type' => MENU_CALLBACK,
-        );
-      }
-    }
+    $menu_path = isset($info['menu_path']) ? substr($menu_path, 0, strlen($menu_path) - 2) : $resource;
 
+    if (isset($items[$menu_path])) {
+      // Prepend the page callback and the resource to the page arguments.
+      if (!isset($items[$menu_path]['page arguments'])) {
+        $items[$menu_path]['page arguments'] = array();
+      }
+      array_unshift($items[$menu_path]['page arguments'], $resource, $items[$menu_path]['page callback']);
+      $items[$menu_path]['page callback'] = 'restws_page_callback';
+    }
+    else {
+      $items[$menu_path] = array(
+        'page callback' => 'restws_page_callback',
+        'page arguments' => array($resource),
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+      );
+    }
     // Querying menu paths.
     foreach (array_keys(restws_get_format_info()) as $format) {
-      // Resource base path urls with suffix.json and .xml for indexing.
-      if (isset($items["$resource.$format"])) {
+      // Resource base path URLs with the suffixes (e.g. node.json or user.xml)
+      // for querying.
+      if (isset($items["$menu_path.$format"])) {
         // Prepend the page callback and the resource to the page arguments.
-        if (!isset($items["$resource.$format"]['page arguments'])) {
-          $items["$resource.$format"]['page arguments'] = array();
+        if (!isset($items["$menu_path.$format"]['page arguments'])) {
+          $items["$menu_path.$format"]['page arguments'] = array();
         }
-        array_unshift($items["$resource.$format"]['page arguments'], $resource, $items["$resource.$format"]['page callback']);
-        $items["$resource.$format"]['page callback'] = 'restws_page_callback';
+        array_unshift($items["$menu_path.$format"]['page arguments'], $resource, $items["$menu_path.$format"]['page callback']);
+        $items["$menu_path.$format"]['page callback'] = 'restws_page_callback';
 
       }
       else {
-        $items["$resource.$format"] = array(
+        $items["$menu_path.$format"] = array(
           'page callback' => 'restws_page_callback',
           'page arguments' => array($resource),
           'access callback' => TRUE,

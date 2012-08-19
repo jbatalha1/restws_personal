@@ -325,6 +325,24 @@ class RestWSTestCase extends DrupalWebTestCase {
   }
 
   /**
+   * Test menu path resource setting.
+   */
+  public function testMenuPath() {
+    module_enable(array('restws_test'));
+
+    $account = $this->drupalCreateUser(array('access content',
+        'bypass node access', 'access resource node')
+    );
+    $this->drupalLogin($account);
+
+    $title = $this->randomName(8);
+    $node = $this->drupalCreateNode(array('title' => $title));
+
+    $result = $this->httpRequest('foo/1.json', 'GET', $account);
+    $this->assertEqual($node->title, $title, "Node was received correctly on the right menu path.");
+  }
+
+  /**
    * Creates a term.
    */
   protected function createTerm($term_name) {
