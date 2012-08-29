@@ -234,6 +234,8 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     $offset *= $limit;
     $query->range($offset, $limit);
 
+    $this->nodeAccess($query);
+
     // Catch any errors, like wrong keywords or properties.
     try {
       $query_result = $query->execute();
@@ -260,8 +262,26 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
       $this->propertyQueryOperation($query, 'Condition', $filter, $value);
     }
     $query->count();
+    $this->nodeAccess($query);
 
     return $query->execute();
+  }
+
+  /**
+   * Helper function to respect node permissions while querying.
+   *
+   * @param EntityFieldQuery $query
+   *   The query object.
+   */
+  protected function nodeAccess(EntityFieldQuery $query) {
+    // Respect node access and filter out unpublished nodes if user lacks
+    // the right permission.
+    if ($this->resource() == 'node') {
+      $query->addTag('node_access');
+      if (!user_access('bypass node access')) {
+        $this->propertyQueryOperation($query, 'Condition', 'status', 1);
+      }
+    }
   }
 
   /**
