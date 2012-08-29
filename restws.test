@@ -135,10 +135,28 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->assertEqual($node->field_tags[LANGUAGE_NONE][1]['tid'], 1, 'Taxonomy term 2 was correctly added.');
 
     // Test XML update.
-    $xml = '<node><field_tags><item resource="taxonomy_term" id="1">' . restws_resource_uri('taxonomy_term', 1) . '</item></field_tags><title>bar</title></node>';
+    $xml = '
+      <node>
+        <title>bar</title>
+        <type>article</type>
+        <author resource="user" id="1">' . restws_resource_uri('user', 1) . '</author>
+        <field_tags>
+          <item resource="taxonomy_term" id="1">' . restws_resource_uri('taxonomy_term', 1) . '</item>
+          <item resource="taxonomy_term" id="2">' . restws_resource_uri('taxonomy_term', 2) . '</item>
+        </field_tags>
+      </node>';
     $result = $this->httpRequest('node/' . $nid, 'PUT', $account, $xml, 'xml');
     $node = node_load($nid, NULL, TRUE);
     $this->assertEqual($node->field_tags[LANGUAGE_NONE][0]['tid'], 1, 'Taxonomy term 1 was correctly updated.');
+    $this->assertEqual($node->field_tags[LANGUAGE_NONE][1]['tid'], 2, 'Taxonomy term 2 was correctly updated.');
+
+    // Test XML create.
+    $result = $this->httpRequest('node', 'POST', $account, $xml, 'xml');
+    $xml_element = simplexml_load_string($result);
+    $nid = $xml_element->attributes()->id;
+    $node = node_load((int) $nid, NULL, TRUE);
+    $this->assertEqual($node->field_tags[LANGUAGE_NONE][0]['tid'], 1, 'Taxonomy term 1 was correctly added.');
+    $this->assertEqual($node->field_tags[LANGUAGE_NONE][1]['tid'], 2, 'Taxonomy term 2 was correctly added.');
   }
 
   /**

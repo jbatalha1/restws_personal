@@ -531,8 +531,8 @@ class RestWSFormatXML extends RestWSBaseFormat {
    */
   public function xmlToArray($properties, SimpleXMLElement $xml, $listItemType = NULL) {
     foreach ($xml->children() as $name => $element) {
-      // Check if isset type or we are processing a list.
-      if (isset($properties[$name]['type']) || isset($listItemType)) {
+      // Check if we are processing an entity, an item from a list or a list.
+      if ((isset($properties[$name]['type']) && (entity_property_list_extract_type($properties[$name]['type']) || entity_get_info($properties[$name]['type'])))  || isset($listItemType)) {
         // If we are processing a list, then set the type of the list and save
         // the results into a a numeric array.
         if (isset($listItemType)) {
@@ -554,7 +554,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
           $values['resource'] = (string)$attributes['resource'];
           $values['uri'] = $this->xmlToArray($properties, $element);
           $id = $this->getResourceReferenceValue($type, $values);
-          // If an id could be extracted, then the a resource array was send.
+          // If an id could be extracted, then a resource array was send.
           if ($id !== FALSE) {
             $result_pointer = $id;
           }
