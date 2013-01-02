@@ -130,6 +130,24 @@ function hook_restws_request_alter(array &$request) {
 }
 
 /**
+ * Alter the outgoing response.
+ *
+ * @param mixed $response
+ *   The response data being returned by the REST service (not yet serialized).
+ *
+ * @param string $function
+ *   The function being called on the REST service.
+ *
+ * @param string $format
+ *   The name of the format serializing the response.
+ */
+function hook_restws_response_alter(&$response, $function, $formatName) {
+  if ($function == 'viewResource' && $formatName == 'json') {
+    $response['site_name'] = variable_get('site_name', '');
+  }
+}
+
+/**
  * @}
  */
 
