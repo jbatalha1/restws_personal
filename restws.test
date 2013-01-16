@@ -224,6 +224,24 @@ class RestWSTestCase extends DrupalWebTestCase {
     $result = $this->httpRequest('node', 'POST', $account, $json);
     $this->assertEqual($result, "406 Not Acceptable: Unknown data properties: $property_name.", 'Response body is correct');
     $this->assertResponse('406', 'HTTP response code is correct.');
+
+
+    // Simulate a CSRF attack without the required token.
+    $new_title = 'HACKED!';
+    $json = drupal_json_encode(array('title' => $new_title));
+    $this->curlExec(array(
+      CURLOPT_HTTPGET => FALSE,
+      CURLOPT_POST => TRUE,
+      CURLOPT_CUSTOMREQUEST => 'POST',
+      CURLOPT_POSTFIELDS => $json,
+      CURLOPT_URL => url('node/' . $node->nid, array('absolute' => TRUE)),
+      CURLOPT_NOBODY => FALSE,
+      CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
+    ));
+    $this->assertResponse(403);
+    // Clear the static cache, otherwise we won't see the update.
+    $node = node_load($node->nid, NULL, TRUE);
+    $this->assertNotEqual($node->title, $new_title, 'Node title was not updated in the database.');
   }
 
   /**
@@ -410,6 +428,10 @@ class RestWSTestCase extends DrupalWebTestCase {
       unset($this->curlHandle);
       $this->drupalLogin($account);
     }
+    if (in_array($method, array('POST', 'PUT', 'DELETE'))) {
+      // GET the CSRF token first for writing requests.
+      $token = $this->drupalGet('restws/session/token');
+    }
     switch ($method) {
       case 'GET':
         // Set query if there are addition GET parameters.
@@ -426,7 +448,10 @@ class RestWSTestCase extends DrupalWebTestCase {
           CURLOPT_POSTFIELDS => $body,
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE,
-          CURLOPT_HTTPHEADER => array('Content-Type: application/' . $format),
+          CURLOPT_HTTPHEADER => array(
+            'Content-Type: application/' . $format,
+            'X-CSRF-Token: ' . $token,
+          ),
         ));
       case 'PUT':
         return $this->curlExec(array(
@@ -435,7 +460,10 @@ class RestWSTestCase extends DrupalWebTestCase {
           CURLOPT_POSTFIELDS => $body,
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE,
-          CURLOPT_HTTPHEADER => array('Content-Type: application/' . $format),
+          CURLOPT_HTTPHEADER => array(
+            'Content-Type: application/' . $format,
+            'X-CSRF-Token: ' . $token,
+          ),
         ));
       case 'DELETE':
         return $this->curlExec(array(
@@ -443,6 +471,7 @@ class RestWSTestCase extends DrupalWebTestCase {
           CURLOPT_CUSTOMREQUEST => 'DELETE',
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE,
+          CURLOPT_HTTPHEADER => array('X-CSRF-Token: ' . $token),
         ));
     }
   }

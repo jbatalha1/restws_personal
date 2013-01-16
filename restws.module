@@ -329,6 +329,15 @@ function restws_page_callback($resource, $page_callback = NULL) {
           $op  = 'query';
         }
     }
+
+    // CSRF protection on write operations.
+    if (!in_array($_SERVER['REQUEST_METHOD'], array('GET', 'HEAD', 'OPTIONS', 'TRACE')) && !restws_csrf_validation()) {
+      echo '403 Access Denied: CSRF validation failed';
+      drupal_add_http_header('Status', '403 Forbidden');
+      drupal_page_footer();
+      exit;
+    }
+
     $payload = file_get_contents('php://input');
     if ($file = variable_get('restws_debug_log')) {
       $log = date(DATE_ISO8601) . "\n";
@@ -433,4 +442,41 @@ function restws_meta_controls() {
     'limit' => 'limit',
     'full' => 'full',
   );
+}
+
+/**
+ * Ensures that a request with cookies has the required CSRF header set.
+ *
+ * @return bool
+ *   TRUE if the request passed the CSRF protection, FALSE otherwise.
+ */
+function restws_csrf_validation() {
+  // This check only applies if the user was successfully authenticated and the
+  // request comes with a session cookie.
+  if (user_is_logged_in() && !empty($_COOKIE[session_name()])) {
+    return isset($_SERVER['HTTP_X_CSRF_TOKEN']) && drupal_valid_token($_SERVER['HTTP_X_CSRF_TOKEN'], 'restws');
+  }
+  return TRUE;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function restws_menu() {
+  $items['restws/session/token'] = array(
+    'page callback' => 'restws_session_token',
+    // Only authenticated users are allowed to retrieve a session token.
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Page callback: returns a session token for the currently active user.
+ */
+function restws_session_token() {
+  drupal_add_http_header('Content-Type', 'text/plain');
+  print drupal_get_token('restws');
+  drupal_exit();
 }

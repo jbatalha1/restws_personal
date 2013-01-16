@@ -77,6 +77,11 @@ Design goals and concept
 
      * Delete: HTTP DELETE /<entity type name>/<entity id>
 
+      Note: if you use cookie-based authentication then you also need to set the
+      HTTP X-CSRF-Token header on all writing requests (POST, PUT and DELETE).
+      You can retrieve the token from /restws/session/token with a standard HTTP
+      GET request.
+
  * The representation <format> can be json, xml etc.
 
  * The usual Drupal permission system is respected, thus permissions are checked
