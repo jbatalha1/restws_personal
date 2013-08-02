@@ -458,13 +458,15 @@ class RestWSTestCase extends DrupalWebTestCase {
       case 'GET':
         // Set query if there are addition GET parameters.
         $options = isset($body) ? array('absolute' => TRUE, 'query' => $body) : array('absolute' => TRUE);
-        return $this->curlExec(array(
+        $curl_options = array(
           CURLOPT_HTTPGET => TRUE,
           CURLOPT_URL => url($url, $options),
-          CURLOPT_NOBODY => FALSE)
+          CURLOPT_NOBODY => FALSE,
         );
+        break;
+
       case 'POST':
-        return $this->curlExec(array(
+        $curl_options = array(
           CURLOPT_HTTPGET => FALSE,
           CURLOPT_POST => TRUE,
           CURLOPT_POSTFIELDS => $body,
@@ -474,9 +476,11 @@ class RestWSTestCase extends DrupalWebTestCase {
             'Content-Type: application/' . $format,
             'X-CSRF-Token: ' . $token,
           ),
-        ));
+        );
+        break;
+
       case 'PUT':
-        return $this->curlExec(array(
+        $curl_options = array(
           CURLOPT_HTTPGET => FALSE,
           CURLOPT_CUSTOMREQUEST => 'PUT',
           CURLOPT_POSTFIELDS => $body,
@@ -486,15 +490,29 @@ class RestWSTestCase extends DrupalWebTestCase {
             'Content-Type: application/' . $format,
             'X-CSRF-Token: ' . $token,
           ),
-        ));
+        );
+        break;
+
       case 'DELETE':
-        return $this->curlExec(array(
+        $curl_options = array(
           CURLOPT_HTTPGET => FALSE,
           CURLOPT_CUSTOMREQUEST => 'DELETE',
           CURLOPT_URL => url($url, array('absolute' => TRUE)),
           CURLOPT_NOBODY => FALSE,
           CURLOPT_HTTPHEADER => array('X-CSRF-Token: ' . $token),
-        ));
+        );
+        break;
     }
+
+    $response = $this->curlExec($curl_options);
+    $headers = $this->drupalGetHeaders();
+    $headers = implode("\n", $headers);
+
+    $this->verbose($method . ' request to: ' . $url .
+      '<hr />Code: ' . curl_getinfo($this->curlHandle, CURLINFO_HTTP_CODE) .
+      '<hr />Response headers: ' . $headers .
+      '<hr />Response body: ' . $response);
+
+    return $response;
   }
 }
