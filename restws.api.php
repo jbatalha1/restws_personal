@@ -148,6 +148,16 @@ function hook_restws_response_alter(&$response, $function, $formatName) {
 }
 
 /**
+ * Alter the list of allowed meta controls.
+ *
+ * @param array $controls
+ *   A list of allowed meta controlers
+ */
+function hook_restws_meta_controls_alter(&$controls) {
+  $controls['deep-load-refs'] = 'deep-load-refs';
+}
+
+/**
  * @}
  */
 

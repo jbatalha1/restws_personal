@@ -449,13 +449,15 @@ function restws_module_implements_alter(&$implementations, $hook) {
  * Return all available meta controls.
  */
 function restws_meta_controls() {
-  return array(
+  $controls = array(
     'sort' => 'sort',
     'direction' => 'direction',
     'page' => 'page',
     'limit' => 'limit',
     'full' => 'full',
   );
+  drupal_alter('restws_meta_controls', $controls);
+  return $controls;
 }
 
 /**
