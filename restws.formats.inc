@@ -110,7 +110,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   public function viewResource($resourceController, $id) {
     $values = self::getData($resourceController->wrapper($id));
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $values, $function, $this->formatName);
+    drupal_alter('restws_response', $values, $function, $this->formatName, $resourceController);
 
     return $this->serialize($values);
   }
@@ -123,7 +123,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     $id = $resourceController->create($values);
     $ref = self::getResourceReference($resourceController->resource(), $id);
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $ref, $function, $this->formatName);
+    drupal_alter('restws_response', $ref, $function, $this->formatName, $resourceController);
 
     return $this->serialize($ref);
   }
@@ -137,7 +137,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     // Return an empty representation by default.
     $value = array();
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $value, $function, $this->formatName);
+    drupal_alter('restws_response', $value, $function, $this->formatName, $resourceController);
 
     return $this->serialize($value);
   }
@@ -150,7 +150,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     // Return an empty representation by default.
     $value = array();
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $value, $function, $this->formatName);
+    drupal_alter('restws_response', $value, $function, $this->formatName, $resourceController);
 
     return $this->serialize($value);
   }
@@ -183,7 +183,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     }
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $values, $function, $this->formatName);
+    drupal_alter('restws_response', $values, $function, $this->formatName, $resourceController);
 
     return $this->serialize($values);
   }
@@ -486,7 +486,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName);
+    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -504,7 +504,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName);
+    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -552,7 +552,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName);
+    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -704,7 +704,7 @@ class RestWSFormatRDF extends RestWSBaseFormat {
     $rdf_element->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName);
+    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
