@@ -234,7 +234,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     $offset = 0;
 
     $query = new EntityFieldQuery();
-    $query->entityCondition('entity_type', $this->resource());
+    $query->entityCondition('entity_type', $this->entityType);
 
     foreach ($filters as $filter => $value) {
       $this->propertyQueryOperation($query, 'Condition', $filter, $value);
@@ -276,7 +276,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     catch (PDOException $exception) {
       throw new RestWSException('Query failed.', 400);
     }
-    $query_result = isset($query_result[$this->resource()]) ? $query_result[$this->resource()] : array();
+    $query_result = isset($query_result[$this->entityType]) ? $query_result[$this->entityType] : array();
 
     $result = array_keys($query_result);
 
@@ -289,7 +289,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    */
   public function count($filters = array()) {
     $query = new EntityFieldQuery();
-    $query->entityCondition('entity_type', $this->resource());
+    $query->entityCondition('entity_type', $this->entityType);
 
     foreach ($filters as $filter => $value) {
       $this->propertyQueryOperation($query, 'Condition', $filter, $value);
