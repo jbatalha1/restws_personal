@@ -232,10 +232,13 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       'id' => $id,
       'resource' => $resource,
     );
-    if (module_exists('uuid') && entity_get_info($resource)) {
-      $ids = entity_get_uuid_by_id($resource, array($id));
-      if ($id = reset($ids)) {
-        $return['uuid'] = $id;
+    if (module_exists('uuid') && $info = entity_get_info($resource)) {
+      // Check whether the entity type integrates with UUID module.
+      if ($info['base table'] && in_array('uuid', $info['schema_fields_sql']['base table'])) {
+        $ids = entity_get_uuid_by_id($resource, array($id));
+        if ($id = reset($ids)) {
+          $return['uuid'] = $id;
+        }
       }
     }
     return $return;
