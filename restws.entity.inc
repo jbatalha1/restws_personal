@@ -415,6 +415,18 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
         return FALSE;
       }
     }
-    return $property->access('edit');
+    // We don't want the property wrapper to check access again on the parent
+    // entity so we directly check access for the property. That way only the
+    // pure property/field access is taken into account.
+    $info = $property->info();
+    if (!empty($info['access callback'])) {
+      global $user;
+      $data = $entity->value();
+      return call_user_func($info['access callback'], 'edit', $property_name, $data, $user, $entity->type());
+    }
+    elseif (isset($info['setter permission'])) {
+      return user_access($info['setter permission']);
+    }
+    return TRUE;
   }
 }
