@@ -108,7 +108,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * Gets the representation of a resource.
    */
   public function viewResource($resourceController, $id) {
-    $values = self::getData($resourceController->wrapper($id));
+    $values = $this->getData($resourceController->wrapper($id));
     $function = __FUNCTION__;
     drupal_alter('restws_response', $values, $function, $this->formatName, $resourceController);
 
@@ -121,7 +121,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   public function createResource($resourceController, $data) {
     $values = $this->unserialize($resourceController->propertyInfo(), $data);
     $id = $resourceController->create($values);
-    $ref = self::getResourceReference($resourceController->resource(), $id);
+    $ref = $this->getResourceReference($resourceController->resource(), $id);
     $function = __FUNCTION__;
     drupal_alter('restws_response', $ref, $function, $this->formatName, $resourceController);
 
@@ -178,7 +178,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     }
     else {
       foreach ($result as $id) {
-        $values['list'][] = self::getData($resourceController->wrapper($id));
+        $values['list'][] = $this->getData($resourceController->wrapper($id));
       }
     }
 
@@ -201,7 +201,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    *
    * This is the counter-part of self::getPropertyValues().
    */
-  public static function getData($wrapper) {
+  public function getData($wrapper) {
     $data = array();
     $filtered = restws_property_access_filter($wrapper);
     foreach ($filtered as $name => $property) {
@@ -209,14 +209,14 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
         if ($property instanceof EntityDrupalWrapper) {
           // For referenced entities only return the URI.
           if ($id = $property->getIdentifier()) {
-            $data[$name] = self::getResourceReference($property->type(), $id);
+            $data[$name] = $this->getResourceReference($property->type(), $id);
           }
         }
         elseif ($property instanceof EntityValueWrapper) {
           $data[$name] = $property->value();
         }
         elseif ($property instanceof EntityListWrapper || $property instanceof EntityStructureWrapper) {
-          $data[$name] = self::getData($property);
+          $data[$name] = $this->getData($property);
         }
       }
       catch (EntityMetadataWrapperException $e) {
@@ -226,7 +226,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     return $data;
   }
 
-  public static function getResourceReference($resource, $id) {
+  public function getResourceReference($resource, $id) {
     $return = array(
       'uri' => restws_resource_uri($resource, $id),
       'id' => $id,
@@ -247,7 +247,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   /**
    * Transforms simple-array data values to valid entity property values.
    *
-   * This is the counter-part of self::getData(), thus it converts resource
+   * This is the counter-part of $this->getData(), thus it converts resource
    * references to the required value(s).
    *
    * @param array $values
