@@ -524,7 +524,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     $nodes = drupal_json_decode($result);
     // No node should be returned.
     $this->assertEqual(count($nodes['list']), 0, 'Unpublished node was successfully hidden.');
-
+    $this->assertNoResponse(404, 'An empty collection should not cause a 404 response.');
   }
 
   /**

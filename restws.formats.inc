@@ -171,6 +171,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     $full = (isset($split_parameters['meta_controls'][$rest_controls['full']])) ? $split_parameters['meta_controls'][$rest_controls['full']] : 1;
 
     $result = $resourceController->query($split_parameters['filters'], $split_parameters['meta_controls']);
+    $values['list'] = array();
     if ($full === '0') {
       foreach ($result as $id) {
         $values['list'][] = $this->getResourceReference($resourceController->resource(), $id);
@@ -406,7 +407,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     $limit = $resourceController->limit($limit);
     $page = isset($parameters[$rest_controls['page']]) ? $parameters[$rest_controls['page']] : 0;
 
-    $last = ceil($count / $limit) - 1;
+    $last = floor($count / $limit);
 
     if ($page > $last || $page < 0) {
       throw new RestWSException('Page doesn\'t exist.', 404);
