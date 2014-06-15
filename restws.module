@@ -115,6 +115,7 @@ function restws_format($name) {
  *   One of 'create', 'update', 'delete' or 'view'.
  */
 function restws_handle_request($op, $format, $resource_name, $id = NULL, $payload = NULL) {
+  $message = $status_message = '';
   if ($resource = restws_resource_controller($resource_name)) {
     // Allow other modules to change the web service request or react upon it.
     $request = array(
@@ -134,11 +135,11 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
         $method = $op . 'Resource';
         if ($op == 'create') {
           print $format->$method($resource, $payload);
-          drupal_add_http_header('Status', '201 Created');
+          $status_message = '201 Created';
         }
         elseif ($op == 'query') {
           if (!$resource instanceof RestWSQueryResourceControllerInterface) {
-            throw new RestWSException('Quering not available for this resources', 501);
+            throw new RestWSException('Querying not available for this resource', 501);
           }
           print $format->$method($resource, $payload);
         }
@@ -148,22 +149,20 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
         drupal_add_http_header('Content-Type', $format->mimeType());
       }
       catch (RestWSException $e) {
-        echo check_plain($e->getHTTPError()) . ': ' . check_plain($e->getMessage());
-        drupal_add_http_header('Status', $e->getHTTPError());
+        $message = check_plain($e->getHTTPError()) . ': ' . check_plain($e->getMessage());
+        $status_message = $e->getHTTPError();
       }
     }
     else {
-      echo '403 Forbidden';
-      drupal_add_http_header('Status', '403 Forbidden');
+      $status_message = $message = '403 Forbidden';
       watchdog('access denied', check_plain($_GET['q']), NULL, WATCHDOG_WARNING);
     }
   }
   else {
-    echo '404 Not Found';
-    drupal_add_http_header('Status', '404 Not Found');
+    $status_message = $message = '404 Not Found';
   }
-  drupal_page_footer();
-  exit;
+
+  restws_terminate_request($status_message, $message);
 }
 
 /**
@@ -345,10 +344,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
 
     // CSRF protection on write operations.
     if (!in_array($_SERVER['REQUEST_METHOD'], array('GET', 'HEAD', 'OPTIONS', 'TRACE')) && !restws_csrf_validation()) {
-      echo '403 Access Denied: CSRF validation failed';
-      drupal_add_http_header('Status', '403 Forbidden');
-      drupal_page_footer();
-      exit;
+      restws_terminate_request('403 Forbidden', '403 Access Denied: CSRF validation failed');
     }
 
     $payload = file_get_contents('php://input');
@@ -372,10 +368,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
     $args = func_get_args();
     return call_user_func_array($page_callback, array_slice($args, 2));
   }
-  echo '404 Not Found';
-  drupal_add_http_header('Status', '404 Not Found');
-  drupal_page_footer();
-  exit;
+  restws_terminate_request('404 Not Found');
 }
 
 /**
@@ -494,4 +487,24 @@ function restws_session_token() {
   drupal_add_http_header('Content-Type', 'text/plain');
   print drupal_get_token('restws');
   drupal_exit();
+}
+
+/**
+ * Terminates the current request with the given status code and message.
+ *
+ * @param $status_message
+ *   (optional) The status message (including the status code) to return via the
+ *   HTTP Status header.
+ * @param $message
+ *   (optional) A message displayed as body of the response.
+ */
+function restws_terminate_request($status_message = NULL, $message = NULL) {
+  if (!empty($message)) {
+    echo $message;
+  }
+  if (!empty($status_message)) {
+    drupal_add_http_header('Status', $status_message);
+  }
+  drupal_page_footer();
+  exit;
 }
