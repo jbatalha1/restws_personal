@@ -568,6 +568,8 @@ class RestWSFormatXML extends RestWSBaseFormat {
   }
 
   public function unserialize($properties, $data) {
+    // Disable XML external entity expansion for security reasons.
+    libxml_disable_entity_loader(TRUE);
     $xml = simplexml_load_string($data);
     return $this->xmlToArray($properties, $xml);
   }
