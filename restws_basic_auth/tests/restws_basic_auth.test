@@ -5,7 +5,7 @@
  * RESTWS Basic Auth tests.
  */
 
-class RestWSBasicAuthTestCase extends DrupalWebTestCase {
+class RestWSBasicAuthTestCase extends BackdropWebTestCase {
 
   /**
    * {@inheritdoc}
@@ -30,14 +30,14 @@ class RestWSBasicAuthTestCase extends DrupalWebTestCase {
    */
   public function testCachePoisoning() {
     // Enable page caching.
-    variable_set('cache', 1);
+    config_set('system.core', 'cache', 1);
 
     // Allow anyone to access the user resource.
-    user_role_grant_permissions(DRUPAL_ANONYMOUS_RID, array('access resource user', 'access user profiles'));
-    user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, array('access resource user', 'access user profiles'));
+    user_role_grant_permissions(BACKDROP_ANONYMOUS_ROLE, array('access resource user', 'access user profiles'));
+    user_role_grant_permissions(BACKDROP_AUTHENTICATED_ROLE, array('access resource user', 'access user profiles'));
 
     // Create an admin account that is allowed to read emails of users.
-    $admin = $this->drupalCreateUser(array('administer users'));
+    $admin = $this->backdropCreateUser(array('administer users'));
     // The user name must start with "restws" in order to be able to
     // authenticate.
     $admin->name = 'restws_' . $admin->name;
@@ -50,18 +50,18 @@ class RestWSBasicAuthTestCase extends DrupalWebTestCase {
     // is not in the page cache.
     $response = $this->httpRequest('user/1.json');
     $this->assertResponse(200);
-    $response = drupal_json_decode($response);
+    $response = backdrop_json_decode($response);
     $this->assertTrue(empty($response['mail']), 'Protected email property is not present on response for anonymous users.');
 
     // Access the resource as admin again and make sure that the response is not
     // from the page cache.
     $response = $this->httpRequest('user/1.json', $admin);
     $this->assertResponse(200);
-    $response = drupal_json_decode($response);
+    $response = backdrop_json_decode($response);
     $this->assertFalse(empty($response['mail']), 'Protected email property is present on response for admin users.');
 
     // Restrict access to view profiles for non-restws tests.
-    user_role_revoke_permissions(DRUPAL_ANONYMOUS_RID, array('access user profiles'));
+    user_role_revoke_permissions(BACKDROP_ANONYMOUS_ROLE, array('access user profiles'));
 
     // Access non-restws resource as admin.
     $response = $this->httpRequest('user/1', $admin);
@@ -94,7 +94,7 @@ class RestWSBasicAuthTestCase extends DrupalWebTestCase {
     }
 
     $response = $this->curlExec($curl_options);
-    $headers = $this->drupalGetHeaders();
+    $headers = $this->backdropGetHeaders();
     $headers = print_r($headers, TRUE);
 
     $this->verbose($method . ' request to: ' . $url .

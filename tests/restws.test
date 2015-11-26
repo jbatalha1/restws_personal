@@ -5,7 +5,7 @@
  * RESTful web services tests.
  */
 
-class RestWSTestCase extends DrupalWebTestCase {
+class RestWSTestCase extends BackdropWebTestCase {
 
   public static function getInfo() {
     return array(
@@ -25,17 +25,17 @@ class RestWSTestCase extends DrupalWebTestCase {
   public function testCRUD() {
     // Test Read.
     $title = $this->randomName(8);
-    $node = $this->drupalCreateNode(array('title' => $title));
-    $account = $this->drupalCreateUser(array('access resource node'));
-    $this->drupalLogin($account);
+    $node = $this->backdropCreateNode(array('title' => $title));
+    $account = $this->backdropCreateUser(array('access resource node'));
+    $this->backdropLogin($account);
     $result = $this->httpRequest('node/' . $node->nid . '.json', 'GET', $account);
-    $node_array = drupal_json_decode($result);
+    $node_array = backdrop_json_decode($result);
     $this->assertEqual($node->title, $node_array['title'], 'Node title was received correctly.');
     $this->assertResponse('200', 'HTTP response code is correct.');
     $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/json', 'HTTP content type is correct.');
 
     // Test Create.
-    $account = $this->drupalCreateUser(array('access content',
+    $account = $this->backdropCreateUser(array('access content',
       'bypass node access', 'access resource node'));
     $title = $this->randomName(8);
     $new_node = array(
@@ -44,9 +44,9 @@ class RestWSTestCase extends DrupalWebTestCase {
       'type'      => 'page',
       'author'    => $account->uid,
     );
-    $json = drupal_json_encode($new_node);
+    $json = backdrop_json_encode($new_node);
     $result = $this->httpRequest('node', 'POST', $account, $json);
-    $result_array = drupal_json_decode($result);
+    $result_array = backdrop_json_decode($result);
     $nid = $result_array['id'];
     $node = node_load($nid);
     $this->assertEqual($title, $node->title, 'Node title in DB is equal to the new title.');
@@ -55,7 +55,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Test Update.
     $new_title = $this->randomName(8);
-    $json = drupal_json_encode(array('title' => $new_title));
+    $json = backdrop_json_encode(array('title' => $new_title));
     $this->httpRequest('node/' . $node->nid, 'PUT', $account, $json);
     // Clear the static cache, otherwise we won't see the update.
     $node = node_load($node->nid, NULL, TRUE);
@@ -77,13 +77,13 @@ class RestWSTestCase extends DrupalWebTestCase {
    */
   public function testBadRequests() {
     // Assure that nodes without types won't be created.
-    $account = $this->drupalCreateUser(array('access content', 'bypass node access', 'access resource node', 'administer users'));
+    $account = $this->backdropCreateUser(array('access content', 'bypass node access', 'access resource node', 'administer users'));
     $title = $this->randomName(8);
     $new_node = array(
       'body'  => array(LANGUAGE_NONE => array(array())),
       'title' => $title,
     );
-    $json = drupal_json_encode($new_node);
+    $json = backdrop_json_encode($new_node);
     $result = $this->httpRequest('node', 'POST', $account, $json);
     $node = entity_load('node', FALSE, array('title' => $title));
     $this->assertEqual(count($node), 0, "Node wasn't created");
@@ -101,7 +101,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->checkPermissions(array(), TRUE);
 
     // Assure that users can't create nodes with unauthorized input formats.
-    $unprivileged_account = $this->drupalCreateUser(array('bypass node access', 'access resource node'));
+    $unprivileged_account = $this->backdropCreateUser(array('bypass node access', 'access resource node'));
     $title = $this->randomName(8);
     $new_node = array(
       'body'  => array(
@@ -111,7 +111,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       'title' => $title,
       'type' => 'page',
     );
-    $json = drupal_json_encode($new_node);
+    $json = backdrop_json_encode($new_node);
     $result = $this->httpRequest('node', 'POST', $unprivileged_account, $json);
     $this->assertResponse('403');
     $this->assertEqual($result, '403 Forbidden: Not authorized to set property body');
@@ -119,7 +119,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->assertEqual(count($node), 0, "Node with unauthorized input format wasn't created");
 
     // Check that the format is allowed if the permission is present.
-    $privileged_account = $this->drupalCreateUser(array('bypass node access', 'access resource node', 'use text format php_code'));
+    $privileged_account = $this->backdropCreateUser(array('bypass node access', 'access resource node', 'use text format php_code'));
     $this->httpRequest('node', 'POST', $privileged_account, $json);
     $this->assertResponse('201');
 
@@ -140,7 +140,7 @@ class RestWSTestCase extends DrupalWebTestCase {
         'format' => 'php_code',
       ),
     );
-    $json = drupal_json_encode($update);
+    $json = backdrop_json_encode($update);
     $result = $this->httpRequest('node/1', 'PUT', $unprivileged_account, $json);
     $this->assertResponse('403');
     $this->assertEqual($result, '403 Forbidden: Not authorized to set property body');
@@ -184,21 +184,21 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // A user without the "administer users" permission should not be able to
     // create a node with the access protected field.
-    $unprivileged_account = $this->drupalCreateUser(array('bypass node access', 'access resource node'));
+    $unprivileged_account = $this->backdropCreateUser(array('bypass node access', 'access resource node'));
     $title = $this->randomName(8);
     $new_node = array(
       'title' => $title,
       'type' => 'page',
       'field_text' => 'test',
     );
-    $json = drupal_json_encode($new_node);
+    $json = backdrop_json_encode($new_node);
     $this->httpRequest('node', 'POST', $unprivileged_account, $json);
     $this->assertResponse('403');
     $nodes = entity_load('node', FALSE, array('title' => $title));
     $this->assertEqual(count($nodes), 0, "Node with access protected field wasn't created");
 
     // Test again with the additional permission, this should work now.
-    $privileged_account = $this->drupalCreateUser(array('bypass node access', 'access resource node', 'administer users'));
+    $privileged_account = $this->backdropCreateUser(array('bypass node access', 'access resource node', 'administer users'));
     $this->httpRequest('node', 'POST', $privileged_account, $json);
     $this->assertResponse('201');
     $node = node_load(1, NULL, TRUE);
@@ -207,7 +207,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     // Update test: unpriviledged users should not be able to change the
     // protected field.
     $update = array('field_text' => 'newvalue');
-    $json = drupal_json_encode($update);
+    $json = backdrop_json_encode($update);
     $result = $this->httpRequest('node/1', 'PUT', $unprivileged_account, $json);
     $this->assertResponse('403');
     $this->assertEqual($result, '403 Forbidden: Not authorized to set property field_text');
@@ -225,10 +225,10 @@ class RestWSTestCase extends DrupalWebTestCase {
    * Test entity references with an array which contains id, entity type.
    */
   public function testResourceArray() {
-    $account = $this->drupalCreateUser(array(
+    $account = $this->backdropCreateUser(array(
       'access content', 'bypass node access', 'access resource node',
     ));
-    $this->drupalLogin($account);
+    $this->backdropLogin($account);
     $this->createTerm("foo");
     $this->createTerm("bar");
 
@@ -249,9 +249,9 @@ class RestWSTestCase extends DrupalWebTestCase {
         'id' => $account->uid, 'resource' => 'user',
       ),
     );
-    $json = drupal_json_encode($new_node);
+    $json = backdrop_json_encode($new_node);
     $result = $this->httpRequest('node', 'POST', $account, $json);
-    $result_array = drupal_json_decode($result);
+    $result_array = backdrop_json_decode($result);
     $nid = $result_array['id'];
     $node = node_load($nid);
     $this->assertEqual($node->field_tags[LANGUAGE_NONE][0]['tid'], 2, 'Taxonomy term 1 was correctly added.');
@@ -287,14 +287,14 @@ class RestWSTestCase extends DrupalWebTestCase {
    */
   public function testXmlFormatter() {
     // Test Read.
-    $account = $this->drupalCreateUser(array('access content',
+    $account = $this->backdropCreateUser(array('access content',
       'bypass node access', 'access resource node')
     );
-    $this->drupalLogin($account);
+    $this->backdropLogin($account);
     $title = $this->randomName(8);
-    $node = $this->drupalCreateNode(array('title' => $title));
+    $node = $this->backdropCreateNode(array('title' => $title));
 
-    $result = $this->drupalGet("node/$node->nid", array(), array('Accept: application/xml'));
+    $result = $this->backdropGet("node/$node->nid", array(), array('Accept: application/xml'));
     $this->assertRaw("<title>$title</title>", 'XML has been generated.');
 
     // Test update.
@@ -317,12 +317,12 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->assertResponse('404', 'HTTP response code is correct.');
 
     // Update a node with an unknown property.
-    $account = $this->drupalCreateUser(array('access content',
+    $account = $this->backdropCreateUser(array('access content',
       'bypass node access', 'access resource node')
     );
-    $node = $this->drupalCreateNode();
+    $node = $this->backdropCreateNode();
     $property_name = $this->randomName(8);
-    $json = drupal_json_encode(array($property_name => $property_name));
+    $json = backdrop_json_encode(array($property_name => $property_name));
     $result = $this->httpRequest('node/' . $node->nid, 'PUT', $account, $json);
     $this->assertEqual($result, "406 Not Acceptable: Unknown data property $property_name.", 'Response body is correct');
     $this->assertResponse('406', 'HTTP response code is correct.');
@@ -336,7 +336,7 @@ class RestWSTestCase extends DrupalWebTestCase {
       'author'    => $account->uid,
       $property_name => $property_name,
     );
-    $json = drupal_json_encode($new_node);
+    $json = backdrop_json_encode($new_node);
     $result = $this->httpRequest('node', 'POST', $account, $json);
     $this->assertEqual($result, "406 Not Acceptable: Unknown data property $property_name.", 'Response body is correct');
     $this->assertResponse('406', 'HTTP response code is correct.');
@@ -344,7 +344,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Simulate a CSRF attack without the required token.
     $new_title = 'HACKED!';
-    $json = drupal_json_encode(array('title' => $new_title));
+    $json = backdrop_json_encode(array('title' => $new_title));
     $this->curlExec(array(
       CURLOPT_HTTPGET => FALSE,
       CURLOPT_POST => TRUE,
@@ -362,29 +362,29 @@ class RestWSTestCase extends DrupalWebTestCase {
     // Simulate a cache poisoning attack where JSON could get into the page
     // cache.
     // Grant node resource access to anonymous users.
-    user_role_grant_permissions(DRUPAL_ANONYMOUS_RID, array('access resource node'));
+    user_role_grant_permissions(BACKDROP_ANONYMOUS_ROLE, array('access resource node'));
     // Enable page caching.
-    variable_set('cache', 1);
+    config_set('system.core', 'cache', 1);
     // Reset cURL here to delete any stored request settings.
     unset($this->curlHandle);
     // Request the JSON representation of the node.
-    $this->drupalGet("node/$node->nid", array(), array('Accept: application/json'));
+    $this->backdropGet("node/$node->nid", array(), array('Accept: application/json'));
     $this->assertUrl("node/$node->nid.json", array(), 'Requesting a resource with JSON Accept header redirects to the .json URL.');
     // Now request the HTML representation.
-    $result = $this->drupalGet("node/$node->nid");
-    $content_type = $this->drupalGetHeader('content-type');
+    $result = $this->backdropGet("node/$node->nid");
+    $content_type = $this->backdropGetHeader('content-type');
     $this->assertNotEqual($content_type, 'application/json', 'Content type header is not JSON after requesting HTML.');
-    $this->assertNull(drupal_json_decode($result), 'Response body is not JSON after requesting HTML.');
+    $this->assertNull(backdrop_json_decode($result), 'Response body is not JSON after requesting HTML.');
   }
 
   /**
    * Tests resource querying.
    */
   public function testQuerying() {
-    $account = $this->drupalCreateUser(array('access content',
+    $account = $this->backdropCreateUser(array('access content',
         'bypass node access', 'access resource node')
     );
-    $this->drupalLogin($account);
+    $this->backdropLogin($account);
 
     $this->createTerm('foo');
     $nodes = array();
@@ -403,12 +403,12 @@ class RestWSTestCase extends DrupalWebTestCase {
       if ($i % 4 == 0) {
         $node['body'] = array(LANGUAGE_NONE => array(array('value' => l('foo', 'node'), 'format' => 'full_html')));
       }
-      $nodes[$i] = $this->drupalCreateNode($node);
+      $nodes[$i] = $this->backdropCreateNode($node);
     }
 
     // Retrieve a list of nodes with json sorted by the title descending.
     $result = $this->httpRequest('node.json', 'GET', $account, array('sort' => 'title', 'direction' => 'DESC'));
-    $result_nodes = drupal_json_decode($result);
+    $result_nodes = backdrop_json_decode($result);
 
     // Start by checking if the last node created is the first in the result.
     $i = 4;
@@ -420,7 +420,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/json', 'HTTP content type is correct.');
 
     // Retrieve a list of nodes with xml.
-    $result = $this->drupalGet('node', array(), array('Accept: application/xml'));
+    $result = $this->backdropGet('node', array(), array('Accept: application/xml'));
     $this->assertRaw('<list>', 'XML has been generated.');
     for ($i = 0; $i < 5; $i++) {
       $this->assertRaw("<title>node$i</title>", 'XML has been generated.');
@@ -428,12 +428,12 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Query for a node with the title 'title1'.
     $result = $this->httpRequest('node.json', 'GET', $account, array('title' => 'node1'));
-    $node = drupal_json_decode($result);
+    $node = backdrop_json_decode($result);
     $this->assertEqual($node['list'][0]['title'], 'node1', 'Node title was received correctly.');
 
     // Query for nodes with the taxonomy term foo which has the tid 1.
     $result = $this->httpRequest('node.json', 'GET', $account, array('field_tags' => '1'));
-    $nodes = drupal_json_decode($result);
+    $nodes = backdrop_json_decode($result);
 
     $this->assertEqual($nodes['list'][0]['title'], 'node0', 'Right node title was received.');
     $this->assertEqual($nodes['list'][0]['field_tags'][0]['id'], 1, 'Node has taxonomy term.');
@@ -443,7 +443,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Test paging and limiting.
     $result = $this->httpRequest('node.json', 'GET', $account, array('limit' => 2, 'page' => 0));
-    $result_nodes = drupal_json_decode($result);
+    $result_nodes = backdrop_json_decode($result);
 
     $this->assertTrue(count($result_nodes['list'] > 2), 'Only two elements where returned');
 
@@ -454,7 +454,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->assertFalse(isset($result_nodes['prev']), 'Prev link was not generated');
 
     $result = $this->httpRequest('node.json', 'GET', $account, array('limit' => 2, 'page' => 2));
-    $result_nodes = drupal_json_decode($result);
+    $result_nodes = backdrop_json_decode($result);
 
     $this->assertFalse(isset($result_nodes['next']), 'Next link was not generated');
     $this->assertTrue($result_nodes['prev'] == url('node', array('absolute' => TRUE, 'query' => array('limit' => 2, 'page' => 1))), 'Prev link was generated');
@@ -464,7 +464,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Test meta control full.
     $result = $this->httpRequest('node.json', 'GET', $account, array('full' => 0));
-    $result_nodes = drupal_json_decode($result);
+    $result_nodes = backdrop_json_decode($result);
 
     foreach ($result_nodes['list'] as $node) {
       $this->assertTrue($node['uri'] == restws_resource_uri('node', $node['id']), 'Rerence to node ' . $node['id'] . ' was received correctly.');
@@ -472,7 +472,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Test field column queries.
     $result = $this->httpRequest('node.json', 'GET', $account, array('body[format]' => 'full_html'));
-    $result_nodes = drupal_json_decode($result);
+    $result_nodes = backdrop_json_decode($result);
 
     $this->assertEqual($result_nodes['list'][0]['title'], 'node0', 'Right node title was received.');
     $this->assertEqual($result_nodes['list'][0]['body']['format'], 'full_html', 'Node has body with full_html.');
@@ -492,10 +492,10 @@ class RestWSTestCase extends DrupalWebTestCase {
    */
   public function testPermissions() {
     // Test other user with "access user profiles" permission.
-    $test_user = $this->drupalCreateUser();
-    $account = $this->drupalCreateUser(array('access resource user', 'access user profiles'));
+    $test_user = $this->backdropCreateUser();
+    $account = $this->backdropCreateUser(array('access resource user', 'access user profiles'));
     $result = $this->httpRequest('user/' . $test_user->uid . '.json', 'GET', $account);
-    $user_array = drupal_json_decode($result);
+    $user_array = backdrop_json_decode($result);
     $this->assertEqual($test_user->name, $user_array['name'], 'User name was received correctly.');
     $this->assertFalse(isset($user_array['mail']), 'User mail is not present in the response.');
     $this->assertFalse(isset($user_array['roles']), 'User roles are not present in the response.');
@@ -504,7 +504,7 @@ class RestWSTestCase extends DrupalWebTestCase {
 
     // Test the own user - access to sensitive information should be allowed.
     $result = $this->httpRequest('user/' . $account->uid . '.json', 'GET', $account);
-    $user_array = drupal_json_decode($result);
+    $user_array = backdrop_json_decode($result);
     $this->assertEqual($account->name, $user_array['name'], 'User name was received correctly.');
     $this->assertEqual($account->mail, $user_array['mail'], 'User mail is present in the response.');
     $role_keys = array_keys($account->roles);
@@ -513,15 +513,15 @@ class RestWSTestCase extends DrupalWebTestCase {
     $this->assertEqual(curl_getinfo($this->curlHandle, CURLINFO_CONTENT_TYPE), 'application/json', 'HTTP content type is correct.');
 
     // Test node access with an unpublished node.
-    $this->drupalCreateNode(array('title' => 'foo', 'status' => 0));
+    $this->backdropCreateNode(array('title' => 'foo', 'status' => 0));
 
-    $this->drupalLogout();
+    $this->backdropLogout();
 
-    $account = $this->drupalCreateUser(array('access resource node'));
-    $this->drupalLogin($account);
+    $account = $this->backdropCreateUser(array('access resource node'));
+    $this->backdropLogin($account);
 
     $result = $this->httpRequest('node.json', 'GET', $account);
-    $nodes = drupal_json_decode($result);
+    $nodes = backdrop_json_decode($result);
     // No node should be returned.
     $this->assertEqual(count($nodes['list']), 0, 'Unpublished node was successfully hidden.');
     $this->assertNoResponse(404, 'An empty collection should not cause a 404 response.');
@@ -531,31 +531,31 @@ class RestWSTestCase extends DrupalWebTestCase {
    * Test menu path resource setting.
    */
   public function testMenuPath() {
-    $account = $this->drupalCreateUser(array('access content',
+    $account = $this->backdropCreateUser(array('access content',
         'bypass node access', 'access resource node')
     );
-    $this->drupalLogin($account);
+    $this->backdropLogin($account);
 
     $title = $this->randomName(8);
-    $node = $this->drupalCreateNode(array('title' => $title));
+    $node = $this->backdropCreateNode(array('title' => $title));
 
     module_enable(array('restws_test'), TRUE);
 
     foreach (array('bar', 'foo/bar', 'foo/bar/node', 'api-v1.2', 'this/is/a/really/long/path') as $menu_path) {
       // Register the menu_path for this test.
-      variable_set('restws_test_menu_path', $menu_path);
-      variable_set('menu_rebuild_needed', TRUE);
+      config_set('restws.settings', 'restws_test_menu_path', $menu_path);
+      state_set('menu_rebuild_needed', TRUE);
 
       // Verify that the query uri is working.
-      $result = $this->drupalGet($menu_path . '.json');
+      $result = $this->backdropGet($menu_path . '.json');
       $this->assertResponse(200);
-      $result = drupal_json_decode($result);
+      $result = backdrop_json_decode($result);
       $this->assertEqual($result['list'][0]['title'], $title);
 
       // Verify that the view uri is working.
-      $result = $this->drupalGet($menu_path . '/1.json');
+      $result = $this->backdropGet($menu_path . '/1.json');
       $this->assertResponse(200);
-      $result = drupal_json_decode($result);
+      $result = backdrop_json_decode($result);
       $this->assertEqual($result['title'], $title);
    }
   }
@@ -579,11 +579,11 @@ class RestWSTestCase extends DrupalWebTestCase {
   protected function httpRequest($url, $method, $account = NULL, $body = NULL, $format = 'json') {
     if (isset($account)) {
       unset($this->curlHandle);
-      $this->drupalLogin($account);
+      $this->backdropLogin($account);
     }
     if (in_array($method, array('POST', 'PUT', 'DELETE'))) {
       // GET the CSRF token first for writing requests.
-      $token = $this->drupalGet('restws/session/token');
+      $token = $this->backdropGet('restws/session/token');
     }
     switch ($method) {
       case 'GET':
@@ -636,7 +636,7 @@ class RestWSTestCase extends DrupalWebTestCase {
     }
 
     $response = $this->curlExec($curl_options);
-    $headers = $this->drupalGetHeaders();
+    $headers = $this->backdropGetHeaders();
     $headers = implode("\n", $headers);
 
     $this->verbose($method . ' request to: ' . $url .

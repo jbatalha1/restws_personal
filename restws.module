@@ -12,10 +12,10 @@
  *   By default null, else the info for the given resource will be returned.
  */
 function restws_get_resource_info($resource = NULL) {
-  $info = &drupal_static(__FUNCTION__);
+  $info = &backdrop_static(__FUNCTION__);
   if (!isset($info)) {
     $info = module_invoke_all('restws_resource_info');
-    drupal_alter('restws_resource_info', $info);
+    backdrop_alter('restws_resource_info', $info);
   }
   if (!empty($resource)) {
     return $info[$resource];
@@ -27,10 +27,10 @@ function restws_get_resource_info($resource = NULL) {
  * Returns info about all defined formats.
  */
 function restws_get_format_info() {
-  $info = &drupal_static(__FUNCTION__);
+  $info = &backdrop_static(__FUNCTION__);
   if (!isset($info)) {
     $info = module_invoke_all('restws_format_info');
-    drupal_alter('restws_format_info', $info);
+    backdrop_alter('restws_format_info', $info);
   }
   return $info;
 }
@@ -57,7 +57,7 @@ function restws_restws_resource_info() {
  *   A resource controller object.
  */
 function restws_resource_controller($name) {
-  $static = &drupal_static(__FUNCTION__);
+  $static = &backdrop_static(__FUNCTION__);
   if (!isset($static[$name])) {
     $info = restws_get_resource_info();
     $static[$name] = isset($info[$name]) ? new $info[$name]['class']($name, $info[$name]) : FALSE;
@@ -100,7 +100,7 @@ function restws_restws_format_info() {
  *   A resource format object.
  */
 function restws_format($name) {
-  $static = &drupal_static(__FUNCTION__);
+  $static = &backdrop_static(__FUNCTION__);
   if (!isset($static[$name])) {
     $info = restws_get_format_info();
     $static[$name] = isset($info[$name]) ? new $info[$name]['class']($name, $info[$name]) : FALSE;
@@ -125,7 +125,7 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
       'id' => &$id,
       'payload' => &$payload,
     );
-    drupal_alter('restws_request', $request);
+    backdrop_alter('restws_request', $request);
 
     // Since there is no access callback for query we need to use view.
     $access_op = $op == 'query' ? 'view' : $op;
@@ -146,7 +146,7 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
         else {
           print $format->$method($resource, $id, $payload);
         }
-        drupal_add_http_header('Content-Type', $format->mimeType());
+        backdrop_add_http_header('Content-Type', $format->mimeType());
       }
       catch (RestWSException $e) {
         $message = check_plain($e->getHTTPError()) . ': ' . check_plain($e->getMessage());
@@ -163,30 +163,6 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
   }
 
   restws_terminate_request($status_message, $message);
-}
-
-/**
- * An exception defining the HTTP error code and message.
- */
-class RestWSException extends Exception {
-
-  public function getHTTPError() {
-    $code = $this->getCode();
-    switch ($code) {
-      case 403:
-        return '403 Forbidden';
-      case 404:
-        return '404 Not Found';
-      case 406:
-        return '406 Not Acceptable';
-      case 412:
-        return '412 Precondition Failed';
-      case 422:
-        return '422 Unprocessable Entity';
-      default:
-        return '500 Internal Server Error';
-    }
-  }
 }
 
 /**
@@ -313,13 +289,13 @@ function restws_page_callback($resource, $page_callback = NULL) {
           $format = restws_format_mimetype($parts[0]);
         }
         // Consumers should not use this URL if page caching is enabled.
-        // Drupal's page cache IDs are only determined by URL path, so this
+        // Backdrop's page cache IDs are only determined by URL path, so this
         // could poison the HTML page cache. A browser request to /node/1 could
         // suddenly return JSON if the cache was primed with this RESTWS
         // response.
-        if ($format && !isset($_COOKIE[session_name()]) && variable_get('cache')) {
+        if ($format && !isset($_COOKIE[session_name()]) && config_get('system.core', 'cache')) {
           // Redirect to the URL path containing the format name instead.
-          drupal_goto($_GET['q'] . '.' . $format->getName(), array(), 301);
+          backdrop_goto($_GET['q'] . '.' . $format->getName(), array(), 301);
         }
     }
   }
@@ -352,7 +328,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
     }
 
     $payload = file_get_contents('php://input');
-    if ($file = variable_get('restws_debug_log')) {
+    if ($file = config_get('restws.settings', 'restws_debug_log')) {
       $log = date(DATE_ISO8601) . "\n";
       $log .= 'Resource: ' . $resource . "\n";
       $log .= 'Operation: ' . $op . "\n";
@@ -452,7 +428,7 @@ function restws_meta_controls() {
     'limit' => 'limit',
     'full' => 'full',
   );
-  drupal_alter('restws_meta_controls', $controls);
+  backdrop_alter('restws_meta_controls', $controls);
   return $controls;
 }
 
@@ -466,7 +442,7 @@ function restws_csrf_validation() {
   // This check only applies if the user was successfully authenticated and the
   // request comes with a session cookie.
   if (user_is_logged_in() && !empty($_COOKIE[session_name()])) {
-    return isset($_SERVER['HTTP_X_CSRF_TOKEN']) && drupal_valid_token($_SERVER['HTTP_X_CSRF_TOKEN'], 'restws');
+    return isset($_SERVER['HTTP_X_CSRF_TOKEN']) && backdrop_valid_token($_SERVER['HTTP_X_CSRF_TOKEN'], 'restws');
   }
   return TRUE;
 }
@@ -488,9 +464,9 @@ function restws_menu() {
  * Page callback: returns a session token for the currently active user.
  */
 function restws_session_token() {
-  drupal_add_http_header('Content-Type', 'text/plain');
-  print drupal_get_token('restws');
-  drupal_exit();
+  backdrop_add_http_header('Content-Type', 'text/plain');
+  print backdrop_get_token('restws');
+  backdrop_exit();
 }
 
 /**
@@ -507,8 +483,37 @@ function restws_terminate_request($status_message = NULL, $message = NULL) {
     echo $message;
   }
   if (!empty($status_message)) {
-    drupal_add_http_header('Status', $status_message);
+    backdrop_add_http_header('Status', $status_message);
   }
-  drupal_page_footer();
+  backdrop_page_footer();
   exit;
 }
+
+/**
+ * Implementation of hook_config_info().
+ */
+function restws_config_info() {
+  $prefixes['restws.settings'] = array(
+    'label' => t('RestWS settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function restws_autoload_info() {
+  return array(
+    'RestWSException' => 'restws.exception.inc',
+    'RestWSResourceControllerInterface' => 'restws.entity.inc',
+    'RestWSQueryResourceControllerInterface' => 'restws.entity.inc',
+    'RestWSEntityResourceController' => 'restws.entity.inc',
+    'RestWSFormatInterface' => 'restws.formats.inc',
+    'RestWSBaseFormat' => 'restws.formats.inc',
+    'RestWSFormatJSON' => 'restws.formats.inc',
+    'RestWSFormatRDF' => 'restws.formats.inc',
+    'RestWSFormatXML' => 'restws.formats.inc',
+  );
+}
+

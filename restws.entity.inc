@@ -230,7 +230,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    * Implements RestWSQueryResourceControllerInterface::query().
    */
   public function query($filters = array(), $meta_controls = array()) {
-    $limit = variable_get('restws_query_max_limit', 100);
+    $limit = config_get('restws.settings', 'restws_query_max_limit');
     $offset = 0;
 
     $query = new EntityFieldQuery();
@@ -321,7 +321,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    * Implements RestWSQueryResourceControllerInterface::limit().
    */
   public function limit($client_limit = NULL) {
-    $limit = variable_get('restws_query_max_limit', 100);
+    $limit = config_get('restws.settings', '_query_max_limit');
     // Only allow user provided limits smaller than the system hard limit.
     if (!empty($client_limit) && $client_limit < $limit) {
       return $client_limit;

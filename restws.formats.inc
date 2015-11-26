@@ -110,7 +110,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
   public function viewResource($resourceController, $id) {
     $values = $this->getData($resourceController->wrapper($id));
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $values, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $values, $function, $this->formatName, $resourceController);
 
     return $this->serialize($values);
   }
@@ -123,7 +123,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     $id = $resourceController->create($values);
     $ref = $this->getResourceReference($resourceController->resource(), $id);
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $ref, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $ref, $function, $this->formatName, $resourceController);
 
     return $this->serialize($ref);
   }
@@ -137,7 +137,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     // Return an empty representation by default.
     $value = array();
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $value, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $value, $function, $this->formatName, $resourceController);
 
     return $this->serialize($value);
   }
@@ -150,7 +150,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     // Return an empty representation by default.
     $value = array();
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $value, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $value, $function, $this->formatName, $resourceController);
 
     return $this->serialize($value);
   }
@@ -160,7 +160,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    */
   public function queryResource($resourceController, $payload) {
     // Get the parameter from the URL.
-    $parameters = drupal_get_query_parameters();
+    $parameters = backdrop_get_query_parameters();
 
     $rest_controls = restws_meta_controls();
     $properties = $resourceController->propertyInfo();
@@ -184,7 +184,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     }
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $values, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $values, $function, $this->formatName, $resourceController);
 
     return $this->serialize($values);
   }
@@ -207,7 +207,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
     $filtered = restws_property_access_filter($wrapper);
     foreach ($filtered as $name => $property) {
       try {
-        if ($property instanceof EntityDrupalWrapper) {
+        if ($property instanceof EntityBackdropWrapper) {
           // For referenced entities only return the URI.
           if ($id = $property->getIdentifier()) {
             $data[$name] = $this->getResourceReference($property->type(), $id);
@@ -304,7 +304,7 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
    * @return mixed
    *   The value to be set for the reference. Usually this is an entity or
    *   resource id, but for generic entity references it's an
-   *   EntityDrupalWrapper.
+   *   EntityBackdropWrapper.
    *
    * @see RestWSBaseFormat::getResourceReference()
    */
@@ -470,11 +470,11 @@ function restws_property_access_filter($wrapper) {
 class RestWSFormatJSON extends RestWSBaseFormat {
 
   public function serialize($values) {
-    return drupal_json_encode($values);
+    return backdrop_json_encode($values);
   }
 
   public function unserialize($properties, $data) {
-    $values = drupal_json_decode($data);
+    $values = backdrop_json_decode($data);
     $this->getPropertyValues($values, $properties);
     return $values;
   }
@@ -495,7 +495,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -513,7 +513,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -526,7 +526,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $element = $xml->createElement('list');
 
     $rest_controls = restws_meta_controls();
-    $parameters = drupal_get_query_parameters();
+    $parameters = backdrop_get_query_parameters();
     $properties = $resourceController->propertyInfo();
     $split_parameters = $this->splitParameters($properties, $parameters);
 
@@ -561,7 +561,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $xml->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -638,7 +638,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $filtered = restws_property_access_filter($wrapper);
     foreach ($filtered as $name => $property) {
       try {
-        if ($property instanceof EntityDrupalWrapper) {
+        if ($property instanceof EntityBackdropWrapper) {
           // For referenced entities only return the URI.
           if ($id = $property->getIdentifier()) {
             $element = $doc->createElement(is_numeric($name) ? 'item' : $name);
@@ -715,7 +715,7 @@ class RestWSFormatRDF extends RestWSBaseFormat {
     $rdf_element->appendChild($element);
 
     $function = __FUNCTION__;
-    drupal_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
+    backdrop_alter('restws_response', $xml, $function, $this->formatName, $resourceController);
 
     return $xml->saveXML();
   }
@@ -739,7 +739,7 @@ class RestWSFormatRDF extends RestWSBaseFormat {
     $filtered = restws_property_access_filter($wrapper);
     foreach ($filtered as $name => $property) {
       try {
-        if ($property instanceof EntityDrupalWrapper) {
+        if ($property instanceof EntityBackdropWrapper) {
           // For referenced entities only return the URI.
           if ($id = $property->getIdentifier()) {
             $element = $this->addRdfElement($doc, $wrapper, $name);
@@ -777,7 +777,7 @@ class RestWSFormatRDF extends RestWSBaseFormat {
    * mapping.
    */
   public function addRdfElement(DOMDOcument $doc, EntityMetadataWrapper $wrapper, $name) {
-    if ($wrapper instanceof EntityDrupalWrapper) {
+    if ($wrapper instanceof EntityBackdropWrapper) {
       $entity = $wrapper->value();
       if (!empty($entity->rdf_mapping[$name])) {
         // Just make use of the first predicate for now.

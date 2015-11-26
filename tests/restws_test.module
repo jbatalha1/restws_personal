@@ -11,7 +11,7 @@
  * @see RestWSTestCase::testMenuPath().
  */
 function restws_test_restws_resource_info_alter(&$resource_info) {
-  $menu_path = variable_get('restws_test_menu_path', 'foo');
+  $menu_path = config_get('restws_test.settings', 'restws_test_menu_path');
   $resource_info['node']['menu_path'] = $menu_path;
 }
 

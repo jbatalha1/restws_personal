@@ -1,9 +1,9 @@
 {
-  "self":"http://drupal-7dev.localhost/node?limit=3&page=1",
-  "first":"http://drupal-7dev.localhost/node?limit=3&page=0",
-  "last":"http://drupal-7dev.localhost/node?limit=3&page=2",
-  "prev":"http://drupal-7dev.localhost/node?limit=3&page=0",
-  "next":"http://drupal-7dev.localhost/node?limit=3&page=2",
+  "self":"http://backdrop-7dev.localhost/node?limit=3&page=1",
+  "first":"http://backdrop-7dev.localhost/node?limit=3&page=0",
+  "last":"http://backdrop-7dev.localhost/node?limit=3&page=2",
+  "prev":"http://backdrop-7dev.localhost/node?limit=3&page=0",
+  "next":"http://backdrop-7dev.localhost/node?limit=3&page=2",
   "list":[
     {
       "body":{
@@ -13,14 +13,14 @@
       },
       "field_tags":[
         {
-          "uri":"http://drupal-7dev.localhost/taxonomy_term/1",
+          "uri":"http://backdrop-7dev.localhost/taxonomy_term/1",
           "id":"1",
           "resource":"taxonomy_term"
         }
       ],
       "field_image":{
         "file":{
-          "uri":"http://drupal-7dev.localhost/file/25",
+          "uri":"http://backdrop-7dev.localhost/file/25",
           "id":"25",
           "resource":"file"
         },
@@ -32,15 +32,15 @@
       "type":"article",
       "title":"Abbas Dolor",
       "language":"und",
-      "url":"http://drupal-7dev.localhost/node/91",
-      "edit_url":"http://drupal-7dev.localhost/node/91/edit",
+      "url":"http://backdrop-7dev.localhost/node/91",
+      "edit_url":"http://backdrop-7dev.localhost/node/91/edit",
       "status":"1",
       "promote":"1",
       "sticky":"0",
       "created":"1342746489",
       "changed":"1343130431",
       "author":{
-        "uri":"http://drupal-7dev.localhost/user/5",
+        "uri":"http://backdrop-7dev.localhost/user/5",
         "id":"5",
         "resource":"user"
       },
@@ -58,24 +58,24 @@
       },
       "field_tags":[
         {
-          "uri":"http://drupal-7dev.localhost/taxonomy_term/17",
+          "uri":"http://backdrop-7dev.localhost/taxonomy_term/17",
           "id":"17",
           "resource":"taxonomy_term"
         },
         {
-          "uri":"http://drupal-7dev.localhost/taxonomy_term/17",
+          "uri":"http://backdrop-7dev.localhost/taxonomy_term/17",
           "id":"17",
           "resource":"taxonomy_term"
         },
         {
-          "uri":"http://drupal-7dev.localhost/taxonomy_term/17",
+          "uri":"http://backdrop-7dev.localhost/taxonomy_term/17",
           "id":"17",
           "resource":"taxonomy_term"
         }
       ],
       "field_image":{
         "file":{
-          "uri":"http://drupal-7dev.localhost/file/26",
+          "uri":"http://backdrop-7dev.localhost/file/26",
           "id":"26",
           "resource":"file"
         },
@@ -87,15 +87,15 @@
       "type":"article",
       "title":"Pala Sudo",
       "language":"und",
-      "url":"http://drupal-7dev.localhost/node/92",
-      "edit_url":"http://drupal-7dev.localhost/node/92/edit",
+      "url":"http://backdrop-7dev.localhost/node/92",
+      "edit_url":"http://backdrop-7dev.localhost/node/92/edit",
       "status":"1",
       "promote":"1",
       "sticky":"0",
       "created":"1342559584",
       "changed":"1343130401",
       "author":{
-        "uri":"http://drupal-7dev.localhost/user/5",
+        "uri":"http://backdrop-7dev.localhost/user/5",
         "id":"5",
         "resource":"user"
       },
@@ -116,7 +116,7 @@
       ],
       "field_image":{
         "file":{
-          "uri":"http://drupal-7dev.localhost/file/27",
+          "uri":"http://backdrop-7dev.localhost/file/27",
           "id":"27",
           "resource":"file"
         },
@@ -128,15 +128,15 @@
       "type":"article",
       "title":"test",
       "language":"und",
-      "url":"http://drupal-7dev.localhost/node/93",
-      "edit_url":"http://drupal-7dev.localhost/node/93/edit",
+      "url":"http://backdrop-7dev.localhost/node/93",
+      "edit_url":"http://backdrop-7dev.localhost/node/93/edit",
       "status":"1",
       "promote":"1",
       "sticky":"0",
       "created":"1343823327",
       "changed":"1343823327",
       "author":{
-        "uri":"http://drupal-7dev.localhost/user/1",
+        "uri":"http://backdrop-7dev.localhost/user/1",
         "id":"1",
         "resource":"user"
       },

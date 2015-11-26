@@ -6,14 +6,14 @@
   },
   "field_tags":[
     {
-      "uri":"http:\/\/drupal-7dev.localhost\/taxonomy_term\/18",
+      "uri":"http:\/\/backdrop-7dev.localhost\/taxonomy_term\/18",
       "id":"18",
       "resource":"taxonomy_term"
     }
   ],
   "field_image":{
     "file":{
-      "uri":"http:\/\/drupal-7dev.localhost\/file\/23",
+      "uri":"http:\/\/backdrop-7dev.localhost\/file\/23",
       "id":"23",
       "resource":"file"
     },
@@ -25,15 +25,15 @@
   "type":"article",
   "title":"Autem Commoveo Ludus Quadrum",
   "language":"und",
-  "url":"http:\/\/drupal-7dev.localhost\/node\/89",
-  "edit_url":"http:\/\/drupal-7dev.localhost\/node\/89\/edit",
+  "url":"http:\/\/backdrop-7dev.localhost\/node\/89",
+  "edit_url":"http:\/\/backdrop-7dev.localhost\/node\/89\/edit",
   "status":"1",
   "promote":"1",
   "sticky":"0",
   "created":"1342808903",
   "changed":"1343130463",
   "author":{
-    "uri":"http:\/\/drupal-7dev.localhost\/user\/1",
+    "uri":"http:\/\/backdrop-7dev.localhost\/user\/1",
     "id":"1",
     "resource":"user"
   },

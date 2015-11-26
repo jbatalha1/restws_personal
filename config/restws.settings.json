@@ -1,0 +1,5 @@
+{
+    "_config_name": "restws.settings",
+    "restws_query_max_limit": 100,
+    "restws_debug_log": ""
+}

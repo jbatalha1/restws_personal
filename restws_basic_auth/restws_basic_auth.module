@@ -21,24 +21,24 @@ function restws_basic_auth_init() {
   }
   if (user_is_anonymous() && isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
     // Login only user names that match a pattern.
-    $user_regex = variable_get('restws_basic_auth_user_regex', '/^restws.*/');
+    $user_regex = config_get('restws_basic_auth.settings', 'restws_basic_auth_user_regex');
     if (preg_match($user_regex, $_SERVER['PHP_AUTH_USER'])) {
       $form_state = array();
       $form_state['values']['name'] = $_SERVER['PHP_AUTH_USER'];
       $form_state['values']['pass'] = $_SERVER['PHP_AUTH_PW'];
-      drupal_form_submit('user_login', $form_state);
+      backdrop_form_submit('user_login', $form_state);
       if (!user_is_anonymous()) {
-        drupal_static_reset();
+        backdrop_static_reset();
 
         // Always make sure to disable the page cache after we authenticated the
         // user so that a response never gets into the page cache.
-        drupal_page_is_cacheable(FALSE);
+        backdrop_page_is_cacheable(FALSE);
       }
       else {
         // Clear the login form error and remove the login failure message.
-        $form = &drupal_static('form_set_error', array());
+        $form = &backdrop_static('form_set_error', array());
         $form = array();
-        drupal_get_messages();
+        backdrop_get_messages();
       }
     }
   }
@@ -52,5 +52,16 @@ function restws_basic_auth_restws_request_alter(array &$request) {
   // response never gets into the page cache for anonymous users.
   // This is necessary because the page cache system only looks at session
   // cookies, but not at HTTP Basic Auth headers.
-  drupal_page_is_cacheable(FALSE);
+  backdrop_page_is_cacheable(FALSE);
+}
+
+/**
+ * Implementation of hook_config_info().
+ */
+function restws_basic_auth_config_info() {
+  $prefixes['restws_basic_auth.settings'] = array(
+    'label' => t('RestWS Basic Auth settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
 }

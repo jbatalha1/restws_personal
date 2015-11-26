@@ -1,6 +1,6 @@
 
 --------------------------------------------------------------------------------
-                 RESTful Web Services for Drupal (restws)
+                 RESTful Web Services for Backdrop (restws)
 --------------------------------------------------------------------------------
 
 Example Exports

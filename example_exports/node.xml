@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <list>
-    <link rel="self" href="http://drupal-7dev.localhost/node?limit=3&amp;page=1"/>
-    <link rel="first" href="http://drupal-7dev.localhost/node?limit=3&amp;page=0"/>
-    <link rel="last" href="http://drupal-7dev.localhost/node?limit=3&amp;page=2"/>
-    <link rel="prev" href="http://drupal-7dev.localhost/node?limit=3&amp;page=0"/>
-    <link rel="next" href="http://drupal-7dev.localhost/node?limit=3&amp;page=2"/>
+    <link rel="self" href="http://backdrop-7dev.localhost/node?limit=3&amp;page=1"/>
+    <link rel="first" href="http://backdrop-7dev.localhost/node?limit=3&amp;page=0"/>
+    <link rel="last" href="http://backdrop-7dev.localhost/node?limit=3&amp;page=2"/>
+    <link rel="prev" href="http://backdrop-7dev.localhost/node?limit=3&amp;page=0"/>
+    <link rel="next" href="http://backdrop-7dev.localhost/node?limit=3&amp;page=2"/>
     <node>
         <body>
             <value>&lt;p&gt;Euismod incassum mauris praesent refoveo tincidunt torqueo turpis uxor. Causa diam dolor elit iriure turpis vereor. Distineo melior vero. Accumsan gemino ille immitto persto usitas. Ad blandit olim probo vicis. Caecus exerci lucidus persto quae si. Causa eu exputo iaceo iustum jus tamen ut. Augue eum ibidem lenis natu olim si tum vero.&lt;/p&gt;
@@ -19,10 +19,10 @@
             <format>filtered_html</format>
         </body>
         <field_tags>
-            <item resource="taxonomy_term" id="1">http://drupal-7dev.localhost/taxonomy_term/1</item>
+            <item resource="taxonomy_term" id="1">http://backdrop-7dev.localhost/taxonomy_term/1</item>
         </field_tags>
         <field_image>
-            <file resource="file" id="25">http://drupal-7dev.localhost/file/25</file>
+            <file resource="file" id="25">http://backdrop-7dev.localhost/file/25</file>
             <alt>Abdo camur gilvus macto praesent probo turpis.</alt>
         </field_image>
         <nid>91</nid>
@@ -31,14 +31,14 @@
         <type>article</type>
         <title>Abbas Dolor</title>
         <language>und</language>
-        <url>http://drupal-7dev.localhost/node/91</url>
-        <edit_url>http://drupal-7dev.localhost/node/91/edit</edit_url>
+        <url>http://backdrop-7dev.localhost/node/91</url>
+        <edit_url>http://backdrop-7dev.localhost/node/91/edit</edit_url>
         <status>1</status>
         <promote>1</promote>
         <sticky>0</sticky>
         <created>1342746489</created>
         <changed>1343130431</changed>
-        <author resource="user" id="5">http://drupal-7dev.localhost/user/5</author>
+        <author resource="user" id="5">http://backdrop-7dev.localhost/user/5</author>
         <log></log>
         <comment>2</comment>
         <comment_count>0</comment_count>
@@ -75,12 +75,12 @@
             <format>php_code</format>
         </body>
         <field_tags>
-            <item resource="taxonomy_term" id="17">http://drupal-7dev.localhost/taxonomy_term/17</item>
-            <item resource="taxonomy_term" id="17">http://drupal-7dev.localhost/taxonomy_term/17</item>
-            <item resource="taxonomy_term" id="17">http://drupal-7dev.localhost/taxonomy_term/17</item>
+            <item resource="taxonomy_term" id="17">http://backdrop-7dev.localhost/taxonomy_term/17</item>
+            <item resource="taxonomy_term" id="17">http://backdrop-7dev.localhost/taxonomy_term/17</item>
+            <item resource="taxonomy_term" id="17">http://backdrop-7dev.localhost/taxonomy_term/17</item>
         </field_tags>
         <field_image>
-            <file resource="file" id="26">http://drupal-7dev.localhost/file/26</file>
+            <file resource="file" id="26">http://backdrop-7dev.localhost/file/26</file>
             <alt>Abbas haero ille iustum ludus sit sudo ut.</alt>
         </field_image>
         <nid>92</nid>
@@ -89,14 +89,14 @@
         <type>article</type>
         <title>Pala Sudo</title>
         <language>und</language>
-        <url>http://drupal-7dev.localhost/node/92</url>
-        <edit_url>http://drupal-7dev.localhost/node/92/edit</edit_url>
+        <url>http://backdrop-7dev.localhost/node/92</url>
+        <edit_url>http://backdrop-7dev.localhost/node/92/edit</edit_url>
         <status>1</status>
         <promote>1</promote>
         <sticky>0</sticky>
         <created>1342559584</created>
         <changed>1343130401</changed>
-        <author resource="user" id="5">http://drupal-7dev.localhost/user/5</author>
+        <author resource="user" id="5">http://backdrop-7dev.localhost/user/5</author>
         <log></log>
         <comment>2</comment>
         <comment_count>0</comment_count>
@@ -111,7 +111,7 @@
         </body>
         <field_tags/>
         <field_image>
-            <file resource="file" id="27">http://drupal-7dev.localhost/file/27</file>
+            <file resource="file" id="27">http://backdrop-7dev.localhost/file/27</file>
             <alt>foo</alt>
         </field_image>
         <nid>93</nid>
@@ -120,14 +120,14 @@
         <type>article</type>
         <title>test</title>
         <language>und</language>
-        <url>http://drupal-7dev.localhost/node/93</url>
-        <edit_url>http://drupal-7dev.localhost/node/93/edit</edit_url>
+        <url>http://backdrop-7dev.localhost/node/93</url>
+        <edit_url>http://backdrop-7dev.localhost/node/93/edit</edit_url>
         <status>1</status>
         <promote>1</promote>
         <sticky>0</sticky>
         <created>1343823327</created>
         <changed>1343823327</changed>
-        <author resource="user" id="1">http://drupal-7dev.localhost/user/1</author>
+        <author resource="user" id="1">http://backdrop-7dev.localhost/user/1</author>
         <log></log>
         <comment>2</comment>
         <comment_count>0</comment_count>

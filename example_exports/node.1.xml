@@ -10,10 +10,10 @@
         <format>php_code</format>
     </body>
     <field_tags>
-        <item resource="taxonomy_term" id="18">http://drupal-7dev.localhost/taxonomy_term/18</item>
+        <item resource="taxonomy_term" id="18">http://backdrop-7dev.localhost/taxonomy_term/18</item>
     </field_tags>
     <field_image>
-        <file resource="file" id="23">http://drupal-7dev.localhost/file/23</file>
+        <file resource="file" id="23">http://backdrop-7dev.localhost/file/23</file>
         <alt>Huic similis tego ullamcorper wisi.</alt>
     </field_image>
     <nid>1</nid>
@@ -22,14 +22,14 @@
     <type>article</type>
     <title>Autem Commoveo Ludus Quadrum</title>
     <language>und</language>
-    <url>http://drupal-7dev.localhost/node/89</url>
-    <edit_url>http://drupal-7dev.localhost/node/89/edit</edit_url>
+    <url>http://backdrop-7dev.localhost/node/89</url>
+    <edit_url>http://backdrop-7dev.localhost/node/89/edit</edit_url>
     <status>1</status>
     <promote>1</promote>
     <sticky>0</sticky>
     <created>1342808903</created>
     <changed>1343130463</changed>
-    <author resource="user" id="1">http://drupal-7dev.localhost/user/1</author>
+    <author resource="user" id="1">http://backdrop-7dev.localhost/user/1</author>
     <log></log>
     <comment>2</comment>
     <comment_count>0</comment_count>

@@ -4,7 +4,7 @@
  * @file
  * This file contains no working PHP code; it exists to provide additional
  * documentation for doxygen as well as to document hooks in the standard
- * Drupal manner.
+ * Backdrop manner.
  */
 
 
@@ -143,7 +143,7 @@ function hook_restws_request_alter(array &$request) {
  */
 function hook_restws_response_alter(&$response, $function, $formatName, $resourceController) {
   if ($function == 'viewResource' && $formatName == 'json') {
-    $response['site_name'] = variable_get('site_name', '');
+    $response['site_name'] = config_get('system.core', 'site_name');
   }
 }
 

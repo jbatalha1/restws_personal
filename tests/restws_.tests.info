@@ -1,0 +1,5 @@
+[RestWSTestCase]
+name = RESTful web services tests
+description = RESTful web services tests.
+group = RestWS
+file = restws.test

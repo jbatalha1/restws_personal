@@ -3,8 +3,8 @@
 --------------------------------------------------------------------------------
 
 This module takes the user name and password from HTTP basic authentication
-headers to perform a Drupal user login. This is useful for authenticating remote
-web service calls with the standard Drupal user access system.
+headers to perform a Backdrop user login. This is useful for authenticating remote
+web service calls with the standard Backdrop user access system.
 
 Per default only user names starting with "restws" will be tried to log in. This
 can be configured with the "restws_basic_auth_user_regex" variable, which allows
