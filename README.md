@@ -1,3 +1,9 @@
+THIS MODULE MAY NOT BE SECURE!
+==============================
+See https://www.drupal.org/node/2765567
+
+**A security vulnerability was detected in the Drupal version which has not been 
+corrected in this Backdrop port.**
 
 --------------------------------------------------------------------------------
                  RESTful Web Services for Backdrop (restws)
