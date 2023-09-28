@@ -1,7 +1,4 @@
 name = RESTful web services
 description = Provides RESTful web services.
 backdrop = 1.x
-files[] = restws.entity.inc
-files[] = restws.formats.inc
-files[] = restws.test
-dependencies[] = entity
+

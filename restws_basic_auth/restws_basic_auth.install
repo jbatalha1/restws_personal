@@ -16,6 +16,6 @@ function restws_basic_auth_uninstall() {
  * Set the user name regex to accept all for backwards compatibility.
  */
 function restws_basic_auth_update_7100() {
-  // Set the user name regex to accept all.
+  // Set the username regex to accept all.
   variable_set('restws_basic_auth_user_regex', '/.*/');
 }

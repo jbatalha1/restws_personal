@@ -6,6 +6,18 @@
  */
 
 /**
+ * Implementation of hook_config_info().
+ */
+function restws_basic_auth_config_info() {
+    $prefixes['restws_basic_auth.settings'] = array(
+        'label' => t('RestWS Basic Auth settings'),
+        'group' => t('Configuration'),
+    );
+    return $prefixes;
+}
+
+
+/**
  * Implements hook_init().
  *
  * Performs a user login from the credentials in the HTTP Authorization header.
@@ -20,8 +32,8 @@ function restws_basic_auth_init() {
     list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', $authentication);
   }
   if (user_is_anonymous() && isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
-    // Login only user names that match a pattern.
-    $user_regex = variable_get('restws_basic_auth_user_regex', '/^restws.*/');
+    // Login only usernames that match a pattern.
+    $user_regex = config_get('restws_basic_auth.settings', 'restws_basic_auth_user_regex');
     if (preg_match($user_regex, $_SERVER['PHP_AUTH_USER'])) {
       $form_state = array();
       $form_state['values']['name'] = $_SERVER['PHP_AUTH_USER'];

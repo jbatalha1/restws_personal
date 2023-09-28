@@ -6,6 +6,35 @@
  */
 
 /**
+ * Implementation of hook_config_info().
+ */
+function restws_config_info() {
+    $prefixes['restws.settings'] = array(
+        'label' => t('RestWS settings'),
+        'group' => t('Configuration'),
+    );
+    return $prefixes;
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function restws_autoload_info() {
+    return array(
+        'RestWSException' => 'restws.exception.inc',
+        'RestWSResourceControllerInterface' => 'restws.entity.inc',
+        'RestWSQueryResourceControllerInterface' => 'restws.entity.inc',
+        'RestWSEntityResourceController' => 'restws.entity.inc',
+        'RestWSFormatInterface' => 'restws.formats.inc',
+        'RestWSBaseFormat' => 'restws.formats.inc',
+        'RestWSFormatJSON' => 'restws.formats.inc',
+        'RestWSFormatRDF' => 'restws.formats.inc',
+        'RestWSFormatXML' => 'restws.formats.inc',
+    );
+}
+
+
+/**
  * Returns info about all defined resources.
  *
  * @param string $resource
@@ -163,36 +192,6 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
   }
 
   restws_terminate_request($status_message, $message);
-}
-
-/**
- * An exception defining the HTTP error code and message.
- */
-class RestWSException extends Exception {
-
-  public function getHTTPError() {
-    $code = $this->getCode();
-    switch ($code) {
-      case 403:
-        return '403 Forbidden';
-
-      case 404:
-        return '404 Not Found';
-
-      case 406:
-        return '406 Not Acceptable';
-
-      case 412:
-        return '412 Precondition Failed';
-
-      case 422:
-        return '422 Unprocessable Entity';
-
-      default:
-        return '500 Internal Server Error';
-    }
-  }
-
 }
 
 /**

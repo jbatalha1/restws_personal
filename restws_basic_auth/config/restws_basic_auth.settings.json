@@ -1,0 +1,4 @@
+{
+  "_config_name": "restws_basic_auth.settings",
+  "restws_basic_auth_user_regex": "/^restws.*/"
+}
