@@ -6,16 +6,16 @@
  */
 
 /**
- * Convert variables to config
+ * Clear the page cache to throw out any RESTWS responses that could be
+ * delivered on HTML requests.
  */
-function restws_update_1000() {
-  // Migrate variables to config.
-  $config = config('restws.settings');
-  $config->set('restws_query_max_limit', update_variable_get('restws_query_max_limit', 100));
-  $config->set('restws_debug_log', update_variable_get('restws_debug_log', ''));
-  $config->save();
+function restws_update_7001() {
+  cache_clear_all(NULL, 'cache_page');
+}
 
-  // Delete variables.
-  update_variable_del('restws_query_max_limit');
-  update_variable_del('restws_debug_log');
+/**
+ * Empty update to force a cache clear.
+ */
+function restws_update_7002() {
+
 }

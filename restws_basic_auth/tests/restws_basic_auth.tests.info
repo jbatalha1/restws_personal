@@ -1,5 +1,0 @@
-[RestWSBasicAuthTestCase]
-name = Basic Auth functionality
-description = RESTWS Basic Auth tests.
-group = RestWS
-file = restws_basic_auth.test

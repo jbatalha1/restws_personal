@@ -74,7 +74,6 @@ interface RestWSFormatInterface {
    */
   public function queryResource($resourceController, $payload);
 
-
   /**
    * Returns the mime type of this format, e.g. 'application/json' or
    * 'application/xml'.
@@ -88,6 +87,7 @@ interface RestWSFormatInterface {
    *   The format name, example: "json".
    */
   public function getName();
+
 }
 
 /**
@@ -418,25 +418,26 @@ abstract class RestWSBaseFormat implements RestWSFormatInterface {
       'query' => &$parameters,
     );
 
-    $uris['self'] = restws_resource_uri($resourceController->resource(), null, $options);
+    $uris['self'] = restws_resource_uri($resourceController->resource(), NULL, $options);
     $parameters['page'] = 0;
-    $uris['first'] = restws_resource_uri($resourceController->resource(), null, $options);
+    $uris['first'] = restws_resource_uri($resourceController->resource(), NULL, $options);
     $parameters['page'] = $last;
-    $uris['last'] = restws_resource_uri($resourceController->resource(), null, $options);
+    $uris['last'] = restws_resource_uri($resourceController->resource(), NULL, $options);
 
 
     if ($page != 0) {
       $parameters['page'] = $page - 1;
-      $uris['prev'] = restws_resource_uri($resourceController->resource(), null, $options);
+      $uris['prev'] = restws_resource_uri($resourceController->resource(), NULL, $options);
     }
 
     if ($page != $last) {
       $parameters['page'] = $page + 1;
-      $uris['next'] = restws_resource_uri($resourceController->resource(), null, $options);
+      $uris['next'] = restws_resource_uri($resourceController->resource(), NULL, $options);
     }
 
     return $uris;
   }
+
 }
 
 /**
@@ -478,6 +479,7 @@ class RestWSFormatJSON extends RestWSBaseFormat {
     $this->getPropertyValues($values, $properties);
     return $values;
   }
+
 }
 
 /**
@@ -674,6 +676,7 @@ class RestWSFormatXML extends RestWSBaseFormat {
     $node->setAttribute('resource', $resource);
     $node->setAttribute('id', $id);
   }
+
 }
 
 /**
@@ -796,4 +799,5 @@ class RestWSFormatRDF extends RestWSBaseFormat {
     }
     return $element;
   }
+
 }

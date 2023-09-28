@@ -1,3 +1,5 @@
 name = Basic authentication login
 description = User login from HTTP authorization headers (part of RESTful web services).
-backdrop = 1.x
+core = 1.x
+files[] = restws_basic_auth.test
+

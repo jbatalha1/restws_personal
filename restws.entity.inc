@@ -85,12 +85,14 @@ interface RestWSResourceControllerInterface {
    * Returns the name of the resource.
    */
   public function resource();
+
 }
 
 /**
  * Specifies query methods for resources.
  */
 interface RestWSQueryResourceControllerInterface extends RestWSResourceControllerInterface {
+
   /**
    * Query for a list of resources.
    *
@@ -98,7 +100,7 @@ interface RestWSQueryResourceControllerInterface extends RestWSResourceControlle
    *   A list of properties to query for, or an empty array if all resources
    *   should be counted.
    * @param array $meta_controls
-   *   @see restws_meta_controls()
+   *   See restws_meta_controls()
    *
    * @return array
    *   An array containing the ids of the matching resources.
@@ -127,6 +129,7 @@ interface RestWSQueryResourceControllerInterface extends RestWSResourceControlle
    *   The limit of the current limit.
    */
   public function limit($client_limit = NULL);
+
 }
 
 /**
@@ -191,6 +194,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     if (!empty($diff)) {
       throw new RestWSException('Unknown data properties: ' . implode(' ', array_keys($diff)) . '.', 406);
     }
+    $this->validateFields($wrapper);
     $wrapper->save();
     return $wrapper->getIdentifier();
   }
@@ -219,6 +223,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     catch (EntityMetadataWrapperException $e) {
       throw new RestWSException($e->getMessage(), 406);
     }
+    $this->validateFields($wrapper);
     $wrapper->save();
   }
 
@@ -230,7 +235,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    * Implements RestWSQueryResourceControllerInterface::query().
    */
   public function query($filters = array(), $meta_controls = array()) {
-    $limit = config_get('restws.settings', 'restws_query_max_limit');
+    $limit = variable_get('restws_query_max_limit', 100);
     $offset = 0;
 
     $query = new EntityFieldQuery();
@@ -283,7 +288,6 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     return $result;
   }
 
-
   /**
    * Implements RestWSQueryResourceControllerInterface::count().
    */
@@ -321,7 +325,7 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    * Implements RestWSQueryResourceControllerInterface::limit().
    */
   public function limit($client_limit = NULL) {
-    $limit = config_get('restws.settings', '_query_max_limit');
+    $limit = variable_get('restws_query_max_limit', 100);
     // Only allow user provided limits smaller than the system hard limit.
     if (!empty($client_limit) && $client_limit < $limit) {
       return $client_limit;
@@ -357,6 +361,13 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
    */
   protected function propertyQueryOperation(EntityFieldQuery $query, $operation, $property, $value) {
     $properties = $this->propertyInfo();
+
+    // Check property access.
+    if (!empty($properties[$property]['access callback'])) {
+      if (!call_user_func($properties[$property]['access callback'], 'view', $property, NULL, NULL, $this->resource())) {
+        throw new RestWSException(t('Not authorized to query property @p', array('@p' => $property)), 403);
+      }
+    }
 
     // If field is not set, then the filter is a property and we can extract
     // the schema field from the property array.
@@ -429,4 +440,22 @@ class RestWSEntityResourceController implements RestWSQueryResourceControllerInt
     }
     return TRUE;
   }
+
+  /**
+   * Validates an entity's fields before they are saved.
+   *
+   * @param EntityBackdropWrapper $wrapper
+   *   A metadata wrapper for the entity.
+   *
+   * @throws RestWSException
+   */
+  protected function validateFields($wrapper) {
+    try {
+      field_attach_validate($wrapper->type(), $wrapper->value());
+    }
+    catch (FieldValidationException $e) {
+      throw new RestWSException($e->getMessage(), 422);
+    }
+  }
+
 }

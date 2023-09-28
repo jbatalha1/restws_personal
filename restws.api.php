@@ -7,7 +7,6 @@
  * Backdrop manner.
  */
 
-
 /**
  * @defgroup restws RestWS module integrations.
  *
@@ -143,7 +142,7 @@ function hook_restws_request_alter(array &$request) {
  */
 function hook_restws_response_alter(&$response, $function, $formatName, $resourceController) {
   if ($function == 'viewResource' && $formatName == 'json') {
-    $response['site_name'] = config_get('system.core', 'site_name');
+    $response['site_name'] = variable_get('site_name', '');
   }
 }
 
@@ -258,4 +257,5 @@ class MyModuleBookResourceController implements RestWSResourceControllerInterfac
   public function resource() {
     return 'mymodule_book';
   }
+
 }

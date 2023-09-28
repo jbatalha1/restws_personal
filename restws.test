@@ -362,9 +362,9 @@ class RestWSTestCase extends BackdropWebTestCase {
     // Simulate a cache poisoning attack where JSON could get into the page
     // cache.
     // Grant node resource access to anonymous users.
-    user_role_grant_permissions(BACKDROP_ANONYMOUS_ROLE, array('access resource node'));
+    user_role_grant_permissions(BACKDROP_ANONYMOUS_RID, array('access resource node'));
     // Enable page caching.
-    config_set('system.core', 'cache', 1);
+    variable_set('cache', 1);
     // Reset cURL here to delete any stored request settings.
     unset($this->curlHandle);
     // Request the JSON representation of the node.
@@ -543,8 +543,8 @@ class RestWSTestCase extends BackdropWebTestCase {
 
     foreach (array('bar', 'foo/bar', 'foo/bar/node', 'api-v1.2', 'this/is/a/really/long/path') as $menu_path) {
       // Register the menu_path for this test.
-      config_set('restws.settings', 'restws_test_menu_path', $menu_path);
-      state_set('menu_rebuild_needed', TRUE);
+      variable_set('restws_test_menu_path', $menu_path);
+      variable_set('menu_rebuild_needed', TRUE);
 
       // Verify that the query uri is working.
       $result = $this->backdropGet($menu_path . '.json');
@@ -646,4 +646,5 @@ class RestWSTestCase extends BackdropWebTestCase {
 
     return $response;
   }
+
 }

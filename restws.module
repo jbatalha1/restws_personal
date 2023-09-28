@@ -166,6 +166,88 @@ function restws_handle_request($op, $format, $resource_name, $id = NULL, $payloa
 }
 
 /**
+ * An exception defining the HTTP error code and message.
+ */
+class RestWSException extends Exception {
+
+  public function getHTTPError() {
+    $code = $this->getCode();
+    switch ($code) {
+      case 403:
+        return '403 Forbidden';
+
+      case 404:
+        return '404 Not Found';
+
+      case 406:
+        return '406 Not Acceptable';
+
+      case 412:
+        return '412 Precondition Failed';
+
+      case 422:
+        return '422 Unprocessable Entity';
+
+      default:
+        return '500 Internal Server Error';
+    }
+  }
+
+}
+
+/**
+ * Implements hook_init().
+ *
+ * Sets the router item for the current path when it has a format.
+ */
+function restws_init() {
+  // Determine the router item for the current path.
+  _restws_determine_router_item();
+}
+
+/**
+ * Reroute requests that come from *.{format} paths.
+ * For example /node/2.json will need a correct page callback to be treated as
+ * a restws request.
+ *
+ * Also, the restws_basic_auth module will need to use this function as well
+ * to perform this again after logging a user in.
+ */
+function _restws_determine_router_item() {
+  // Determine the position of the resource and resource id in the path.
+  if (strpos(request_path(), '.') === FALSE) {
+    return;
+  }
+  $menu_paths = array();
+  foreach (restws_get_resource_info() as $resource => $info) {
+    $menu_paths[] = isset($info['menu_path']) ? $info['menu_path'] : $resource;
+  }
+  $formats = array_keys(restws_get_format_info());
+
+  // The pattern matches menu paths like 'node', 'user' followed by an ID.
+  // This ID cannot start with a 0 but can contain any digit.
+  $pattern = '#^((?:';
+  $pattern .= implode('|', $menu_paths);
+  $pattern .= ')\/[1-9][0-9]*)\.(?:';
+
+  // The path will end with a format that is supported by restws, for example
+  // 'json' or 'xml'.
+  $pattern .= implode('|', $formats);
+  $pattern .= ')$#i';
+
+  // Replace pattern precisely once.
+  $count = 0;
+  $path = preg_replace($pattern, '\1', request_path(), 1, $count);
+
+  // When the pattern matches and there is no menu router for the request
+  // path, substitute this module's page callback.
+  if ($count && !menu_get_item()) {
+    $router_item = menu_get_item($path);
+    menu_set_item(NULL, $router_item);
+  }
+}
+
+/**
  * Implements hook_menu_alter().
  */
 function restws_menu_alter(&$items) {
@@ -189,7 +271,7 @@ function restws_menu_alter(&$items) {
     else {
       $items[$menu_path] = array(
         'page callback' => 'restws_page_callback',
-        'page arguments' => array($resource),
+        'page arguments' => array($resource, 'backdrop_not_found'),
         'access callback' => TRUE,
         'type' => MENU_CALLBACK,
       );
@@ -208,7 +290,7 @@ function restws_menu_alter(&$items) {
     else {
       $items[$menu_path] = array(
         'page callback' => 'restws_page_callback',
-        'page arguments' => array($resource),
+        'page arguments' => array($resource, 'backdrop_not_found'),
         'access callback' => TRUE,
         'type' => MENU_CALLBACK,
       );
@@ -229,7 +311,7 @@ function restws_menu_alter(&$items) {
       else {
         $items["$menu_path.$format"] = array(
           'page callback' => 'restws_page_callback',
-          'page arguments' => array($resource),
+          'page arguments' => array($resource, 'backdrop_not_found'),
           'access callback' => TRUE,
           'type' => MENU_CALLBACK,
         );
@@ -240,8 +322,17 @@ function restws_menu_alter(&$items) {
 
 /**
  * Menu page callback.
+ *
+ * @param string $resource
+ *   The name of the resource.
+ * @param string $page_callback
+ *   The page callback to pass through when the request is not handled by this
+ *   module. If no other pre-existing callback is used, 'backdrop_not_found'
+ *   should be passed explicitly.
+ * @param mixed $arg1,...
+ *   Further arguments that are passed through to the given page callback.
  */
-function restws_page_callback($resource, $page_callback = NULL) {
+function restws_page_callback($resource, $page_callback) {
   // Determine the position of the resource and resource id in the path.
   $resource_info = restws_get_resource_info($resource);
   $resource_pos = isset($resource_info['menu_path']) ? count(explode('/', $resource_info['menu_path'])) - 1 : 0;
@@ -293,9 +384,9 @@ function restws_page_callback($resource, $page_callback = NULL) {
         // could poison the HTML page cache. A browser request to /node/1 could
         // suddenly return JSON if the cache was primed with this RESTWS
         // response.
-        if ($format && !isset($_COOKIE[session_name()]) && config_get('system.core', 'cache')) {
+        if ($format && !isset($_COOKIE[session_name()]) && variable_get('cache')) {
           // Redirect to the URL path containing the format name instead.
-          backdrop_goto($_GET['q'] . '.' . $format->getName(), array(), 301);
+          backdrop_goto($_GET['q'] . '.' . $format->getName(), array('query' => backdrop_get_query_parameters()), 301);
         }
     }
   }
@@ -328,7 +419,7 @@ function restws_page_callback($resource, $page_callback = NULL) {
     }
 
     $payload = file_get_contents('php://input');
-    if ($file = config_get('restws.settings', 'restws_debug_log')) {
+    if ($file = variable_get('restws_debug_log')) {
       $log = date(DATE_ISO8601) . "\n";
       $log .= 'Resource: ' . $resource . "\n";
       $log .= 'Operation: ' . $op . "\n";
@@ -343,12 +434,9 @@ function restws_page_callback($resource, $page_callback = NULL) {
 
   // @todo: Determine human readable URIs and redirect, if there is no
   // page callback.
-  if (isset($page_callback)) {
-    // Further page callback arguments have been appended to our arguments.
-    $args = func_get_args();
-    return call_user_func_array($page_callback, array_slice($args, 2));
-  }
-  restws_terminate_request('404 Not Found');
+  // Fall back to the passed $page_callback and pass through more arguments.
+  $args = func_get_args();
+  return call_user_func_array($page_callback, array_slice($args, 2));
 }
 
 /**
@@ -488,32 +576,3 @@ function restws_terminate_request($status_message = NULL, $message = NULL) {
   backdrop_page_footer();
   exit;
 }
-
-/**
- * Implementation of hook_config_info().
- */
-function restws_config_info() {
-  $prefixes['restws.settings'] = array(
-    'label' => t('RestWS settings'),
-    'group' => t('Configuration'),
-  );
-  return $prefixes;
-}
-
-/**
- * Implements hook_autoload_info().
- */
-function restws_autoload_info() {
-  return array(
-    'RestWSException' => 'restws.exception.inc',
-    'RestWSResourceControllerInterface' => 'restws.entity.inc',
-    'RestWSQueryResourceControllerInterface' => 'restws.entity.inc',
-    'RestWSEntityResourceController' => 'restws.entity.inc',
-    'RestWSFormatInterface' => 'restws.formats.inc',
-    'RestWSBaseFormat' => 'restws.formats.inc',
-    'RestWSFormatJSON' => 'restws.formats.inc',
-    'RestWSFormatRDF' => 'restws.formats.inc',
-    'RestWSFormatXML' => 'restws.formats.inc',
-  );
-}
-
